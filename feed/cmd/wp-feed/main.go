@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"repo.local/wp-pub/feed"
 )
@@ -14,18 +15,13 @@ func init() {
 }
 
 func main() {
-	// f := []feed.Config{
-	// 	{
-	// 		Name: "foo",
-	// 		Feeds: []feed.Feed{
-	// 			{Name: "sun", URL: "foo"},
-	// 		},
-	// 	},
-	// }
-	// enc := json.NewEncoder(os.Stdout)
-	// enc.SetIndent("", "  ")
-	// enc.Encode(f)
-	err := feed.Run(*flagConfig)
+	f, err := os.Open(*flagConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	err = feed.Run(f)
 	if err != nil {
 		log.Fatal(err)
 	}
