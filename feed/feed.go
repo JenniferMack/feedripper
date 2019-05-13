@@ -2,45 +2,76 @@ package feed
 
 import (
 	"bytes"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
-	"time"
+	"sort"
+
+	wppub "repo.local/wp-pub"
 )
 
-func fetch(u string) ([]byte, error) {
-	resp, err := http.Get(u)
-	if err != nil {
-		return nil, fmt.Errorf("getting feed: %s", err)
+func getOldJSON(p string) []wppub.WPItem {
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		return nil
 	}
 
-	b := bytes.Buffer{}
-
-	defer resp.Body.Close()
-	n, err := b.ReadFrom(resp.Body)
+	f, err := os.Open(p)
 	if err != nil {
-		return nil, fmt.Errorf("reading feed: %s", err)
-	}
-
-	log.Printf("[%d] %s", n, u)
-	return b.Bytes(), nil
-}
-
-func writeRaw(b []byte, dir, name, ext string) error {
-	stamp := "_" + string(time.Now().Unix())
-	path := filepath.Join(dir, name+stamp+ext)
-
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("creating file: %s", err)
+		return nil
 	}
 	defer f.Close()
 
-	_, err = f.Write(b)
+	i, err := wppub.ReadWPJSON(f)
 	if err != nil {
-		return fmt.Errorf("writing file: %s", err)
+		return nil
+	}
+	return i
+}
+
+func mergeJSON(bn []byte, dir, name string) error {
+	path := filepath.Join(dir, name+".json")
+
+	o := getOldJSON(path)
+
+	n, err := wppub.ReadWPXML(bytes.NewBuffer(bn))
+	if err != nil {
+		return err
+	}
+	m := mergeItems(o, n)
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	x, err := wppub.WriteWPJSON(m, f)
+	log.Printf("[%d/%d] %s", x, len(m), path)
+	if err != nil {
+		return err
 	}
 	return nil
+}
+
+func mergeItems(o, n []wppub.WPItem) []wppub.WPItem {
+	o = append(o, n...)
+	list := make(map[string]wppub.WPItem)
+
+	for _, v := range o {
+		if p, ok := list[v.GUID]; ok {
+			if v.PubDate.After(p.PubDate.Time) {
+				list[v.GUID] = v
+			}
+		} else {
+			list[v.GUID] = v
+		}
+	}
+
+	n = nil
+	for _, v := range list {
+		n = append(n, v)
+	}
+
+	sort.Slice(n, func(i, j int) bool { return n[i].PubDate.After(n[j].PubDate.Time) })
+	return n
 }

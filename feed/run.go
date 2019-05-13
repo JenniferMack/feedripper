@@ -1,22 +1,16 @@
 package feed
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 )
 
-func Run(conf string) error {
-	// open and read conf file
-	f, err := os.Open(conf)
-	defer f.Close()
-	if err != nil {
-		return err
-	}
-	c, err := readConfig(f)
+func Run(conf io.Reader) error {
+	c, err := readConfig(conf)
 	if err != nil {
 		return err
 	}
@@ -34,11 +28,12 @@ func Run(conf string) error {
 				log.Printf("writing feed: %s", err)
 				continue
 			}
+			err = mergeJSON(b, v.JSONDir, f.Name)
+			if err != nil {
+				log.Printf("merging: %s", err)
+				continue
+			}
 		}
 	}
-	// open old json
-	// convert raw to json
-	// merge old and new
-	// write merged
 	return nil
 }

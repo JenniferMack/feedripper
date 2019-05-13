@@ -1,9 +1,10 @@
 package feed
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -39,18 +40,19 @@ type (
 func (f Feed) fetch() ([]byte, error) {
 	resp, err := http.Get(f.URL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting feed: %s", err)
 	}
-
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+
+	b := bytes.Buffer{}
+
+	_, err = b.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading feed: %s", err)
 	}
-	return b, nil
+	return b.Bytes(), nil
 }
 
-// ReadFeedConfig returns configuration information.
 func readConfig(in io.Reader) ([]Config, error) {
 	c := []Config{}
 	err := json.NewDecoder(in).Decode(&c)
