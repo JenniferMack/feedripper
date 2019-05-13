@@ -51,3 +51,7 @@ func (t *xmlTime) UnmarshalXML(d *xml.Decoder, s xml.StartElement) error {
 	*t = xmlTime{parse.UTC()}
 	return nil
 }
+
+func (x *xmlTime) Set(t time.Time) {
+	*x = xmlTime{t}
+}
