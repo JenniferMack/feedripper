@@ -10,6 +10,7 @@ import (
 	wppub "repo.local/wp-pub"
 )
 
+// May return an empty slice, and that's ok.
 func getOldJSON(p string) []wppub.WPItem {
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		return nil
@@ -30,13 +31,13 @@ func getOldJSON(p string) []wppub.WPItem {
 
 func mergeJSON(bn []byte, dir, name string) error {
 	path := filepath.Join(dir, name+".json")
-
 	o := getOldJSON(path)
 
-	n, err := wppub.ReadWPXML(bytes.NewBuffer(bn))
+	n, err := wppub.ReadWPXML(bytes.NewReader(bn))
 	if err != nil {
 		return err
 	}
+
 	m := mergeItems(o, n)
 
 	f, err := os.Create(path)
