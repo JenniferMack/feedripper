@@ -22,3 +22,22 @@ func TestMerge(t *testing.T) {
 		t.Errorf("%#v", m)
 	}
 }
+
+func TestDeadline(t *testing.T) {
+	l := []wppub.WPItem{
+		{Title: "one", GUID: "foo"},
+		{Title: "two", GUID: "bar"},
+		{Title: "three", GUID: "baz"},
+	}
+	l[0].PubDate.Set(time.Now().AddDate(0, 0, -2))
+	l[1].PubDate.Set(time.Now().Add(-10 * time.Minute))
+	l[2].PubDate.Set(time.Now().Add(-5 * time.Minute))
+
+	d, err := dropExpired(l, time.Now(), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d) != 2 {
+		t.Errorf("%#v", d)
+	}
+}
