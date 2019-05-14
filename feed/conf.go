@@ -20,7 +20,7 @@ type (
 		Language   string    `json:"language"`
 		SiteURL    string    `json:"site_url"`
 		MainTagNum uint      `json:"main_tag_num"`
-		Tags       []tag     `json:"tags"`
+		Tags       []string  `json:"tags"`
 		Exclude    []string  `json:"exclude"`
 		Feeds      []Feed    `json:"feeds"`
 	}
@@ -29,11 +29,6 @@ type (
 		Name string `json:"name"`
 		URL  string `json:"url"`
 		Type string `json:"type"`
-	}
-
-	tag struct {
-		Priority uint   `json:"priority"`
-		Name     string `json:"name"`
 	}
 )
 

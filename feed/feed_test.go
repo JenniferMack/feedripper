@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	wppub "repo.local/wp-pub"
+	wp "repo.local/wp-pub"
 )
 
 func TestMerge(t *testing.T) {
-	l := []wppub.WPItem{
+	l := []wp.Item{
 		{Title: "one", GUID: "foo"},
 		{Title: "two", GUID: "foo"},
 		{Title: "three", GUID: "bar"},
@@ -24,7 +24,7 @@ func TestMerge(t *testing.T) {
 }
 
 func TestDeadline(t *testing.T) {
-	l := []wppub.WPItem{
+	l := []wp.Item{
 		{Title: "one", GUID: "foo"},
 		{Title: "two", GUID: "bar"},
 		{Title: "three", GUID: "baz"},

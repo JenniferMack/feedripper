@@ -6,19 +6,19 @@ import (
 	"io"
 )
 
-func ReadWPXML(in io.Reader) ([]WPItem, error) {
+func ReadWPXML(in io.Reader) ([]Item, error) {
 	r := RSS{}
 	err := xml.NewDecoder(in).Decode(&r)
 	return r.Channel.Items, err
 }
 
-func ReadWPJSON(in io.Reader) ([]WPItem, error) {
-	i := []WPItem{}
+func ReadWPJSON(in io.Reader) ([]Item, error) {
+	i := []Item{}
 	err := json.NewDecoder(in).Decode(&i)
 	return i, err
 }
 
-func WriteWPJSON(i []WPItem, out io.Writer) (int, error) {
+func WriteWPJSON(i []Item, out io.Writer) (int, error) {
 	items, err := json.MarshalIndent(i, "", " ")
 	if err != nil {
 		return 0, err

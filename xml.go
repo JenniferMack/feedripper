@@ -13,10 +13,10 @@ type (
 
 	Channel struct {
 		XMLName xml.Name `xml:"channel"`
-		Items   []WPItem `xml:"item"`
+		Items   []Item   `xml:"item"`
 	}
 
-	WPItem struct {
+	Item struct {
 		XMLName    xml.Name   `xml:"item" json:"-"`
 		Title      string     `xml:"title" json:"title"`
 		Link       string     `xml:"link" json:"link"`
