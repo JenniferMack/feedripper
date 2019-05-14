@@ -6,12 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
-	wppub "repo.local/wp-pub"
+	wp "repo.local/wp-pub"
 )
 
 // May return an empty slice, and that's ok.
-func getOldJSON(p string) []wppub.WPItem {
+func getOldJSON(p string) []wp.Item {
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		return nil
 	}
@@ -22,7 +23,7 @@ func getOldJSON(p string) []wppub.WPItem {
 	}
 	defer f.Close()
 
-	i, err := wppub.ReadWPJSON(f)
+	i, err := wp.ReadWPJSON(f)
 	if err != nil {
 		return nil
 	}
@@ -33,7 +34,7 @@ func mergeJSON(bn []byte, dir, name string) error {
 	path := filepath.Join(dir, name+".json")
 	o := getOldJSON(path)
 
-	n, err := wppub.ReadWPXML(bytes.NewReader(bn))
+	n, err := wp.ReadWPXML(bytes.NewReader(bn))
 	if err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func mergeJSON(bn []byte, dir, name string) error {
 	}
 	defer f.Close()
 
-	x, err := wppub.WriteWPJSON(m, f)
+	x, err := wp.WriteWPJSON(m, f)
 	log.Printf("[%d/%d] %s", x, len(m), path)
 	if err != nil {
 		return err
@@ -54,9 +55,9 @@ func mergeJSON(bn []byte, dir, name string) error {
 	return nil
 }
 
-func mergeItems(o, n []wppub.WPItem) []wppub.WPItem {
+func mergeItems(o, n []wp.Item) []wp.Item {
 	o = append(o, n...)
-	list := make(map[string]wppub.WPItem)
+	list := make(map[string]wp.Item)
 
 	for _, v := range o {
 		if p, ok := list[v.GUID]; ok {
@@ -75,4 +76,16 @@ func mergeItems(o, n []wppub.WPItem) []wppub.WPItem {
 
 	sort.Slice(n, func(i, j int) bool { return n[i].PubDate.After(n[j].PubDate.Time) })
 	return n
+}
+
+func dropExpired(l []wp.Item, end time.Time, days int) ([]wp.Item, error) {
+	start := end.AddDate(0, 0, days)
+
+	list := []wp.Item{}
+	for _, v := range l {
+		if v.PubDate.Before(end) && v.PubDate.After(start) {
+			list = append(list, v)
+		}
+	}
+	return list, nil
 }
