@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"time"
 )
 
 type Feed struct {
@@ -16,6 +17,33 @@ type Feed struct {
 // List returns a slice of Items in the Feed.
 func (f Feed) List() []item {
 	return f.items
+}
+
+// Deadline removes items that are not within `r` days of date `d`.
+// `r` can be either positive or negative.
+// If `r` is zero, an error is returned.
+func (f *Feed) Deadline(d time.Time, r int) error {
+	if r == 0 {
+		return fmt.Errorf("unable to use range of %d days", r)
+	}
+
+	var start, end time.Time
+	e := d.AddDate(0, 0, r)
+
+	if d.Before(e) {
+		start, end = d, e
+	} else {
+		start, end = e, d
+	}
+
+	ok := []item{}
+	for _, v := range f.items {
+		if v.PubDate.After(start) && v.PubDate.Before(end) {
+			ok = append(ok, v)
+		}
+	}
+	f.items = ok
+	return nil
 }
 
 // String returns the contents of the Feed as tab indented JSON.

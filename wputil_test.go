@@ -1,16 +1,71 @@
 package wputil
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strconv"
+	"strings"
 	"testing"
+	"time"
 )
 
-const s = `[ { "title": "one", "guid": "a" }, { "title": "two", "guid": "b" }, { "title": "three", "guid": "c" } ]`
-const s2 = `[ { "title": "one", "guid": "a" }, { "title": "two", "guid": "d" }, { "title": "three", "guid": "e" } ]`
+const s = `[
+{ "title": "one", "guid": "a" },
+{ "title": "two", "guid": "b" },
+{ "title": "three", "guid": "c" }
+]`
+const s2 = `[
+{ "title": "one", "guid": "a", "pub_date": "2019-05-14T11:15:00Z" },
+{ "title": "two", "guid": "d", "pub_date": "2019-05-15T11:59:59Z" },
+{ "title": "three", "guid": "e", "pub_date": "2019-05-15T12:10:00Z" }
+]`
+
+func TestDates(t *testing.T) {
+	d, err := time.Parse(time.RFC3339, "2019-05-15T12:00:00Z")
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Run("range +", func(t *testing.T) {
+		f, err := ReadWPJSON(strings.NewReader(s2))
+		if err != nil {
+			t.Error(err)
+		}
+		err = f.Deadline(d, 1)
+		if err != nil {
+			t.Error(err)
+		}
+		if f.List()[0].GUID != "e" {
+			t.Error(f.String())
+		}
+	})
+
+	t.Run("range -", func(t *testing.T) {
+		f, err := ReadWPJSON(strings.NewReader(s2))
+		if err != nil {
+			t.Error(err)
+		}
+		err = f.Deadline(d, -1)
+		if err != nil {
+			t.Error(err)
+		}
+		if f.List()[0].GUID != "d" {
+			t.Error(f.String())
+		}
+	})
+
+	t.Run("range 0", func(t *testing.T) {
+		f, err := ReadWPJSON(strings.NewReader(s2))
+		if err != nil {
+			t.Error(err)
+		}
+		err = f.Deadline(d, 0)
+		if err == nil {
+			t.Error(err)
+		}
+	})
+}
 
 func TestNil(t *testing.T) {
 	f := Feed{}
@@ -79,20 +134,18 @@ func TestInterface(t *testing.T) {
 }
 
 func TestCrazyLong(t *testing.T) {
-	s := bytes.Buffer{}
+	s := strings.Builder{}
 	for i := 0; i < 10000; i++ {
 		s.WriteRune('a')
 		s.WriteRune('b')
 	}
 	f := Feed{}
 	f.Merge([]item{{Title: "test", Body: body{Text: s.String()}}})
-	s.Reset()
-	s.ReadFrom(&f)
 	// s.WriteTo(os.Stdout)
-	if bytes.Contains(s.Bytes(), []byte("aa")) {
+	if strings.Contains(f.String(), "aa") {
 		t.Error("dupe a!")
 	}
-	if bytes.Contains(s.Bytes(), []byte("bb")) {
+	if strings.Contains(f.String(), "bb") {
 		t.Error("dupe b!")
 	}
 }
