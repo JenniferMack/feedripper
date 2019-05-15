@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	wp "repo.local/wp-pub"
+	wp "repo.local/wputil"
 )
 
 // May return an empty slice, and that's ok.
