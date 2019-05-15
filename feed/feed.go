@@ -1,3 +1,4 @@
+// Package feed provides tools for getting and saving WordPress feeds.
 package feed
 
 import (
