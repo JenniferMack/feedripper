@@ -10,6 +10,7 @@ import (
 )
 
 type (
+	// Config holds the information for saving WordPress feeds.
 	Config struct {
 		Name       string    `json:"name"`
 		Number     string    `json:"number"`
@@ -25,10 +26,10 @@ type (
 		Feeds      []Feed    `json:"feeds"`
 	}
 
+	// Feed holds the infomation for a particular feed.
 	Feed struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
-		Type string `json:"type"`
 	}
 )
 
@@ -48,6 +49,7 @@ func (f Feed) fetch() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// ReadConfig returns a slice of `Config`.
 func ReadConfig(in io.Reader) ([]Config, error) {
 	c := []Config{}
 	err := json.NewDecoder(in).Decode(&c)
