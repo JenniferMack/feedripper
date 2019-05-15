@@ -1,3 +1,4 @@
+// Package wputil provides tools for working with WordPress RSS feeds.
 package wputil
 
 import (
