@@ -12,6 +12,14 @@ import (
 const s = `[ { "title": "one", "guid": "a" }, { "title": "two", "guid": "b" }, { "title": "three", "guid": "c" } ]`
 const s2 = `[ { "title": "one", "guid": "a" }, { "title": "two", "guid": "d" }, { "title": "three", "guid": "e" } ]`
 
+func TestNil(t *testing.T) {
+	f := Feed{}
+	_, err := f.Write(nil)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestString(t *testing.T) {
 	f := Feed{}
 	f.Write([]byte(s))
