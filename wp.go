@@ -56,6 +56,9 @@ func (f *Feed) Merge(n []item) {
 // Write appends the contents of `p` (JSON encoded slice of `Item`) to the Feed.
 // Duplicates are removed and the internal list is sorted newest first.
 func (f *Feed) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
 	t := []item{}
 
 	err = json.Unmarshal(p, &t)
