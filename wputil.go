@@ -20,6 +20,11 @@ func (f Feed) List() []item {
 	return f.items
 }
 
+// Len returns the number of feed items.
+func (f Feed) Len() int {
+	return len(f.items)
+}
+
 // Deadline removes items that are not within `r` days of date `d`.
 // `r` can be either positive or negative.
 // If `r` is zero, an error is returned.

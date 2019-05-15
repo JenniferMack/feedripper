@@ -21,6 +21,16 @@ const s2 = `[
 { "title": "three", "guid": "e", "pub_date": "2019-05-15T12:10:00Z" }
 ]`
 
+func TestLen(t *testing.T) {
+	f, err := ReadWPJSON(strings.NewReader(s2))
+	if err != nil {
+		t.Error(err)
+	}
+	if f.Len() != 3 {
+		t.Error(f.Len())
+	}
+}
+
 func TestDates(t *testing.T) {
 	d, err := time.Parse(time.RFC3339, "2019-05-15T12:00:00Z")
 	if err != nil {
