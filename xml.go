@@ -1,4 +1,4 @@
-package wppub
+package wputil
 
 import (
 	"encoding/xml"
@@ -6,34 +6,34 @@ import (
 )
 
 type (
-	RSS struct {
+	rss struct {
 		XMLName xml.Name `xml:"rss"`
-		Channel Channel  `xml:"channel"`
+		Channel channel  `xml:"channel"`
 	}
 
-	Channel struct {
+	channel struct {
 		XMLName xml.Name `xml:"channel"`
-		Items   []Item   `xml:"item"`
+		Items   []item   `xml:"item"`
 	}
 
-	Item struct {
+	item struct {
 		XMLName    xml.Name   `xml:"item" json:"-"`
 		Title      string     `xml:"title" json:"title"`
 		Link       string     `xml:"link" json:"link"`
 		PubDate    xmlTime    `xml:"pubDate" json:"pub_date"`
-		Categories []Category `xml:"category" json:"categories"`
+		Categories []category `xml:"category" json:"categories"`
 		GUID       string     `xml:"guid" json:"guid"`
-		Body       Body       `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
+		Body       body       `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
 	}
 
-	Category struct {
+	category struct {
 		XMLName xml.Name `xml:"category" json:"-"`
 		Name    string   `xml:",cdata"`
 	}
 
-	Body struct {
+	body struct {
 		XMLName xml.Name `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"-"`
-		Text    string   `xml:",cdata"`
+		Text    string   `xml:",cdata" json:"text"`
 	}
 
 	xmlTime struct {

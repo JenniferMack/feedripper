@@ -1,27 +1,32 @@
-package wppub
+package wputil
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"io"
 )
 
-func ReadWPXML(in io.Reader) ([]Item, error) {
-	r := RSS{}
+// ReadWPXML reads WordPress RSS feed XML from a io.Reader and returns a populated Feed.
+// Duplicates are removed and the internal list is sorted newest first.
+func ReadWPXML(in io.Reader) (Feed, error) {
+	r := rss{}
+	f := Feed{}
+
 	err := xml.NewDecoder(in).Decode(&r)
-	return r.Channel.Items, err
-}
-
-func ReadWPJSON(in io.Reader) ([]Item, error) {
-	i := []Item{}
-	err := json.NewDecoder(in).Decode(&i)
-	return i, err
-}
-
-func WriteWPJSON(i []Item, out io.Writer) (int, error) {
-	items, err := json.MarshalIndent(i, "", " ")
 	if err != nil {
-		return 0, err
+		return f, err
 	}
-	return out.Write(items)
+
+	f.Merge(r.Channel.Items)
+	return f, nil
+}
+
+// ReadWPJSON reads JSON from an io.Reader and returns a populated Feed.
+// Duplicates are removed and the internal list is sorted newest first.
+func ReadWPJSON(in io.Reader) (Feed, error) {
+	f := Feed{}
+	_, err := io.Copy(&f, in)
+	if err != nil {
+		return f, err
+	}
+	return f, nil
 }
