@@ -28,7 +28,7 @@ type (
 
 	category struct {
 		XMLName xml.Name `xml:"category" json:"-"`
-		Name    string   `xml:",cdata"`
+		Name    string   `xml:",cdata" json:"name"`
 	}
 
 	body struct {
