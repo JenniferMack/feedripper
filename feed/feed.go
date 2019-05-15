@@ -18,26 +18,26 @@ func writeRawXML(b []byte, dir, name string) error {
 	return ioutil.WriteFile(path, b, 0644)
 }
 
-func writeJSON(feed wputil.Feed, dir, name string) (int, error) {
+func writeJSON(feed wputil.Feed, dir, name string) (int, int, error) {
 	path := filepath.Join(dir, name+".json")
 	// Read saved JSON if any
 	b := readJSONFile(path)
 	_, err := feed.Write(b)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	f, err := os.Create(path)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	defer f.Close()
 
 	n, err := io.Copy(f, &feed)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return int(n), nil
+	return int(n), feed.Len(), nil
 }
 
 func readJSONFile(p string) []byte {

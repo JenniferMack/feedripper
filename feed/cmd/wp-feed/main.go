@@ -21,7 +21,7 @@ func main() {
 	}
 	defer f.Close()
 
-	err = feed.Run(f)
+	err = feed.Get(f)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -9,7 +9,9 @@ import (
 	"repo.local/wputil"
 )
 
-func Run(conf io.Reader) error {
+// Get is a convieniece function that saves feeds according to the
+// provided config file.
+func Get(conf io.Reader) error {
 	c, err := ReadConfig(conf)
 	if err != nil {
 		return err
@@ -32,11 +34,11 @@ func Run(conf io.Reader) error {
 				return fmt.Errorf("json load: %s", err)
 			}
 
-			n, err := writeJSON(feed, v.JSONDir, f.Name)
+			n, s, err := writeJSON(feed, v.JSONDir, f.Name)
 			if err != nil {
 				return fmt.Errorf("json write: %s", err)
 			}
-			log.Printf("[%d/%d] %s", n, len(feed.List()), f.URL)
+			log.Printf("[%d/%d] %s -> %s/%s.json", n, s, f.URL, v.JSONDir, f.Name)
 		}
 	}
 	return nil
