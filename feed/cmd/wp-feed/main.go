@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"repo.local/wp-pub/feed"
+	"repo.local/wputil/feed"
 )
 
 var flagConfig = flag.String("c", "config.json", "config file")
