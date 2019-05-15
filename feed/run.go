@@ -1,38 +1,42 @@
 package feed
 
 import (
+	"bytes"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
-	"path/filepath"
-	"strconv"
-	"time"
+
+	"repo.local/wputil"
 )
 
 func Run(conf io.Reader) error {
-	c, err := readConfig(conf)
+	c, err := ReadConfig(conf)
 	if err != nil {
 		return err
 	}
-	// get feed data
+
 	for _, v := range c {
 		for _, f := range v.Feeds {
 			b, err := f.fetch()
 			if err != nil {
-				log.Printf("fetching feed: %s", err)
-				continue
+				return fmt.Errorf("fetching feed: %s", err)
 			}
-			stamp := "_" + strconv.FormatInt(time.Now().Unix(), 10)
-			err = ioutil.WriteFile(filepath.Join(v.RSSDir, f.Name+stamp+f.Type), b, 0644)
+
+			err = writeRawXML(b, v.RSSDir, f.Name)
 			if err != nil {
-				log.Printf("writing feed: %s", err)
-				continue
+				return fmt.Errorf("xml write: %s", err)
 			}
-			err = mergeJSON(b, v.JSONDir, f.Name)
+
+			feed, err := wputil.ReadWPXML(bytes.NewReader(b))
 			if err != nil {
-				log.Printf("merging: %s", err)
-				continue
+				return fmt.Errorf("json load: %s", err)
 			}
+
+			n, err := writeJSON(feed, v.JSONDir, f.Name)
+			if err != nil {
+				return fmt.Errorf("json write: %s", err)
+			}
+			log.Printf("[%d/%d] %s", n, len(feed.List()), f.URL)
 		}
 	}
 	return nil
