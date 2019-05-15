@@ -14,7 +14,7 @@ type (
 		Name       string    `json:"name"`
 		Number     string    `json:"number"`
 		Deadline   time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
-		Days       uint      `json:"days"`
+		Days       int       `json:"days"`
 		JSONDir    string    `json:"json_dir"`
 		RSSDir     string    `json:"rss_dir"`
 		Language   string    `json:"language"`
@@ -48,7 +48,7 @@ func (f Feed) fetch() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func readConfig(in io.Reader) ([]Config, error) {
+func ReadConfig(in io.Reader) ([]Config, error) {
 	c := []Config{}
 	err := json.NewDecoder(in).Decode(&c)
 	return c, err
