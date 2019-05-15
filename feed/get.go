@@ -38,8 +38,24 @@ func Get(conf io.Reader) error {
 			if err != nil {
 				return fmt.Errorf("json write: %s", err)
 			}
-			log.Printf("[%d/%d] %s -> %s/%s.json", n, s, f.URL, v.JSONDir, f.Name)
+			log.SetFlags(0)
+			log.Printf("Feed: [%s/%d] %s -> %s/%s.json", size(n), s, f.URL, v.JSONDir, f.Name)
 		}
 	}
 	return nil
+}
+
+func size(b int) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%dB", b)
+	}
+
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+
+	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMG"[exp])
 }
