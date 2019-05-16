@@ -41,6 +41,15 @@ type (
 	}
 )
 
+func (i item) hasTag(t string) bool {
+	for _, v := range i.Categories {
+		if v.Name == t {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *xmlTime) UnmarshalXML(d *xml.Decoder, s xml.StartElement) error {
 	var v string
 	d.DecodeElement(&v, &s)
