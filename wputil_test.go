@@ -2,7 +2,6 @@ package wputil
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -43,41 +42,20 @@ func TestTagging(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	var a string
-	var e []string
+	var tags []string
 
-	t.Run("inc/exc", func(t *testing.T) {
-		a = "foo"
-		e = []string{"faz", "baz"}
-		t1, err := f1.Tags(a, e, 0)
-		if err != nil {
-			t.Error(err)
-		}
+	t.Run("inc", func(t *testing.T) {
+		tags = []string{"faz", "baz"}
+		t1 := f1.Exclude(tags)
 		if t1.Len() != 2 {
 			t.Error(t1.List())
 		}
 	})
 
-	t.Run("inc/limit 1", func(t *testing.T) {
-		a = "baz"
-		e = nil
-		t1, err := f1.Tags(a, e, 1)
-		if err != nil {
-			t.Error(err)
-		}
-		if t1.Len() != 1 {
-			t.Error(t1.List())
-		}
-	})
-
-	t.Run("inc/limit 2", func(t *testing.T) {
-		a = "foo"
-		e = nil
-		t1, err := f1.Tags(a, e, 2)
-		if err != nil {
-			t.Error(err)
-		}
-		if t1.Len() != 2 {
+	t.Run("exc", func(t *testing.T) {
+		tags = []string{"fez"}
+		t1 := f1.Exclude(tags)
+		if t1.Len() != 3 {
 			t.Error(t1.List())
 		}
 	})
@@ -165,9 +143,10 @@ func TestNil(t *testing.T) {
 func TestString(t *testing.T) {
 	f := Feed{}
 	f.Write([]byte(s))
-	str := fmt.Sprint(f)
-	if len(str) != 813 {
-		t.Error(len(str))
+	var str interface{} = f.String()
+	_, ok := str.(string)
+	if !ok {
+		t.Error("not a string")
 	}
 }
 
@@ -184,7 +163,7 @@ func TestInterface(t *testing.T) {
 	t.Run("merge items", func(t *testing.T) {
 		f := Feed{}
 		f.Write([]byte(s))
-		f.Merge([]item{{Title: "a string of words", GUID: "foo"}})
+		f.Merge([]Item{{Title: "a string of words", GUID: "foo"}})
 		if len(f.List()) != 5 {
 			t.Error(len(f.List()))
 		}
@@ -205,13 +184,13 @@ func TestInterface(t *testing.T) {
 		for _, v := range amt {
 			g.Reset()
 			for i := 0; i < v; i++ {
-				g.Merge([]item{{Title: "a string of words", GUID: strconv.Itoa(i)}})
+				g.Merge([]Item{{Title: "a string of words", GUID: strconv.Itoa(i)}})
 			}
 			b, err := ioutil.ReadAll(&g)
 			if err != nil {
 				t.Error(err)
 			}
-			s := []item{}
+			s := []Item{}
 			json.Unmarshal(b, &s)
 			if len(s) != v {
 				t.Error(len(s))
@@ -227,7 +206,7 @@ func TestCrazyLong(t *testing.T) {
 		s.WriteRune('b')
 	}
 	f := Feed{}
-	f.Merge([]item{{Title: "test", Body: body{Text: s.String()}}})
+	f.Merge([]Item{{Title: "test", Body: body{Text: s.String()}}})
 	// s.WriteTo(os.Stdout)
 	if strings.Contains(f.String(), "aa") {
 		t.Error("dupe a!")

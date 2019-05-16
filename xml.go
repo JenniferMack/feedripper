@@ -13,10 +13,10 @@ type (
 
 	channel struct {
 		XMLName xml.Name `xml:"channel"`
-		Items   []item   `xml:"item"`
+		Items   []Item   `xml:"item"`
 	}
 
-	item struct {
+	Item struct {
 		XMLName    xml.Name   `xml:"item" json:"-"`
 		Title      string     `xml:"title" json:"title"`
 		Link       string     `xml:"link" json:"link"`
@@ -41,9 +41,18 @@ type (
 	}
 )
 
-func (i item) hasTag(t string) bool {
+func (i Item) hasTag(t string) bool {
 	for _, v := range i.Categories {
 		if v.Name == t {
+			return true
+		}
+	}
+	return false
+}
+
+func (i Item) hasTagList(t []string) bool {
+	for _, tag := range t {
+		if i.hasTag(tag) {
 			return true
 		}
 	}

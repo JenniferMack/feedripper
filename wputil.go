@@ -10,13 +10,13 @@ import (
 )
 
 type Feed struct {
-	items []item
+	items []Item
 	json  []byte
 	index int
 }
 
 // List returns a slice of Items in the Feed.
-func (f Feed) List() []item {
+func (f Feed) List() []Item {
 	return f.items
 }
 
@@ -30,34 +30,30 @@ func (f *Feed) Append(i Feed) {
 	f.items = append(f.items, i.items...)
 }
 
-// Tag returns a Feed that matchs tag `t` excluding `e`.
-func (f Feed) Tags(t string, e []string, n int) (Feed, error) {
-	var inc, exc, out Feed
-	// include
-	for _, item := range f.items {
-		if item.hasTag(t) {
-			inc.items = append(inc.items, item)
-		}
-	}
-	// exclude
-	if e != nil {
-		for i, item := range inc.items {
-			for _, ex := range e {
-				if item.hasTag(ex) {
-					exc.items = append(inc.items[:i], inc.items[i+1:]...)
-					break
-				}
-			}
-		}
-		out.Merge(exc.items)
-	} else {
-		out.Merge(inc.items)
-	}
+// Include returns a Feed containing only the posts with given tags
+func (f Feed) Include(l []string) Feed {
+	var out, inc Feed
 
-	if n != 0 {
-		out.items = out.items[:n]
+	for _, v := range f.items {
+		if v.hasTagList(l) {
+			inc.items = append(inc.items, v)
+		}
 	}
-	return out, nil
+	out.Merge(inc.items)
+	return out
+}
+
+// Exclude returns a Feed with excluded posts removed.
+func (f Feed) Exclude(l []string) Feed {
+	var out, exc Feed
+
+	for _, v := range f.items {
+		if !v.hasTagList(l) {
+			exc.items = append(exc.items, v)
+		}
+	}
+	out.Merge(exc.items)
+	return out
 }
 
 // Deadline removes items that are not within `r` days of date `d`.
@@ -77,7 +73,7 @@ func (f *Feed) Deadline(d time.Time, r int) error {
 		start, end = e, d
 	}
 
-	ok := []item{}
+	ok := []Item{}
 	for _, v := range f.items {
 		if v.PubDate.After(start) && v.PubDate.Before(end) {
 			ok = append(ok, v)
@@ -98,9 +94,9 @@ func (f Feed) String() string {
 
 // Merge adds the slice of Item `p` to the feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func (f *Feed) Merge(n []item) {
+func (f *Feed) Merge(n []Item) {
 	i := append(f.items, n...)
-	list := make(map[string]item)
+	list := make(map[string]Item)
 
 	for _, v := range i {
 		if p, ok := list[v.GUID]; ok {
@@ -128,7 +124,7 @@ func (f *Feed) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	t := []item{}
+	t := []Item{}
 
 	err = json.Unmarshal(p, &t)
 	if err != nil {
