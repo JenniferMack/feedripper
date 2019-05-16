@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	wp "repo.local/wp-pub"
+	wp "repo.local/wputil"
 )
 
 func TestMerge(t *testing.T) {

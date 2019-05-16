@@ -21,9 +21,17 @@ type (
 		Language   string    `json:"language"`
 		SiteURL    string    `json:"site_url"`
 		MainTagNum uint      `json:"main_tag_num"`
-		Tags       []string  `json:"tags"`
+		Tags       []Tag     `json:"tags"`
 		Exclude    []string  `json:"exclude"`
 		Feeds      []Feed    `json:"feeds"`
+	}
+
+	// Tag holds the tag name and priority
+	Tag struct {
+		Name     string `json:"name"`
+		Text     string `json:"text"`
+		Priority uint   `json:"priority"`
+		Limit    uint   `json:"limit"`
 	}
 
 	// Feed holds the infomation for a particular feed.
@@ -33,7 +41,7 @@ type (
 	}
 )
 
-func (f Feed) fetch() ([]byte, error) {
+func (f Feed) FetchURL() ([]byte, error) {
 	resp, err := http.Get(f.URL)
 	if err != nil {
 		return nil, fmt.Errorf("getting feed: %s", err)
