@@ -11,8 +11,9 @@ var flagVers = flag.Bool("v", false, "print version number")
 
 var feedCmd = flag.NewFlagSet("feed", flag.ExitOnError)
 var flagFeedConfig = feedCmd.String("f", "config.json", "config file location")
-var flagFeedGet = feedCmd.Bool("get", false, "retrieve the feeds")
+var flagFeedFetch = feedCmd.Bool("fetch", false, "retrieve the feeds")
 var flagFeedMerge = feedCmd.Bool("merge", false, "merge the feeds")
+var flagFeedFormat = feedCmd.Bool("pp", false, "pretty print feeds")
 
 func init() {
 	flag.Parse()
@@ -37,11 +38,13 @@ func main() {
 		confFile := openFileR(*flagFeedConfig, "feed config")
 		defer confFile.Close()
 
-		if *flagFeedGet {
-			errs(getFeeds(confFile), "feed fetch")
+		if *flagFeedFetch {
+			errs(getFeeds(confFile, *flagFeedFormat), "feed fetch")
 		}
 		if *flagFeedMerge {
-			// mergeFeeds(confFile)
+			_, err := confFile.Seek(0, 0)
+			errs(err, "config seek")
+			errs(mergeFeeds(confFile, *flagFeedFormat), "feed merge")
 		}
 		return
 
