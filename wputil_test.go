@@ -11,15 +11,92 @@ import (
 )
 
 const s = `[
-{ "title": "one", "guid": "a" },
-{ "title": "two", "guid": "b" },
-{ "title": "three", "guid": "c" }
+{ "title": "one", "guid": "a",
+	"categories": [
+		{ "Name": "foo" },
+		{ "Name": "bar" }
+		] },
+{ "title": "two", "guid": "b",
+	"categories": [
+		{ "Name": "foo" },
+		{ "Name": "baz" }
+		] },
+{ "title": "three", "guid": "c",
+	"categories": [
+		{ "Name": "baz" },
+		{ "Name": "faz" }
+		] },
+{ "title": "four", "guid": "d",
+	"categories": [
+		{ "Name": "foo" },
+		{ "Name": "fez" }
+		] }
 ]`
 const s2 = `[
 { "title": "one", "guid": "a", "pub_date": "2019-05-14T11:15:00Z" },
 { "title": "two", "guid": "d", "pub_date": "2019-05-15T11:59:59Z" },
 { "title": "three", "guid": "e", "pub_date": "2019-05-15T12:10:00Z" }
 ]`
+
+func TestTagging(t *testing.T) {
+	f1, err := ReadWPJSON(strings.NewReader(s))
+	if err != nil {
+		t.Error(err)
+	}
+	var a string
+	var e []string
+
+	t.Run("inc/exc", func(t *testing.T) {
+		a = "foo"
+		e = []string{"faz", "baz"}
+		t1, err := f1.Tags(a, e, 0)
+		if err != nil {
+			t.Error(err)
+		}
+		if t1.Len() != 2 {
+			t.Error(t1.List())
+		}
+	})
+
+	t.Run("inc/limit 1", func(t *testing.T) {
+		a = "baz"
+		e = nil
+		t1, err := f1.Tags(a, e, 1)
+		if err != nil {
+			t.Error(err)
+		}
+		if t1.Len() != 1 {
+			t.Error(t1.List())
+		}
+	})
+
+	t.Run("inc/limit 2", func(t *testing.T) {
+		a = "foo"
+		e = nil
+		t1, err := f1.Tags(a, e, 2)
+		if err != nil {
+			t.Error(err)
+		}
+		if t1.Len() != 2 {
+			t.Error(t1.List())
+		}
+	})
+}
+
+func TestAppend(t *testing.T) {
+	f1, err := ReadWPJSON(strings.NewReader(s2))
+	if err != nil {
+		t.Error(err)
+	}
+	f2, err := ReadWPJSON(strings.NewReader(s2))
+	if err != nil {
+		t.Error(err)
+	}
+	f1.Append(f2)
+	if f1.Len() != 6 {
+		t.Error(f1.Len())
+	}
+}
 
 func TestLen(t *testing.T) {
 	f, err := ReadWPJSON(strings.NewReader(s2))
@@ -89,7 +166,7 @@ func TestString(t *testing.T) {
 	f := Feed{}
 	f.Write([]byte(s))
 	str := fmt.Sprint(f)
-	if len(str) != 436 {
+	if len(str) != 813 {
 		t.Error(len(str))
 	}
 }
@@ -98,7 +175,7 @@ func TestInterface(t *testing.T) {
 	t.Run("writer", func(t *testing.T) {
 		f := Feed{}
 		f.Write([]byte(s))
-		if len(f.List()) != 3 {
+		if len(f.List()) != 4 {
 			t.Error(len(f.List()))
 		}
 		// io.Copy(os.Stdout, &f)
@@ -108,7 +185,7 @@ func TestInterface(t *testing.T) {
 		f := Feed{}
 		f.Write([]byte(s))
 		f.Merge([]item{{Title: "a string of words", GUID: "foo"}})
-		if len(f.List()) != 4 {
+		if len(f.List()) != 5 {
 			t.Error(len(f.List()))
 		}
 	})

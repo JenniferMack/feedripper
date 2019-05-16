@@ -25,6 +25,41 @@ func (f Feed) Len() int {
 	return len(f.items)
 }
 
+// Append adds items without checking for duplicates or sorting.
+func (f *Feed) Append(i Feed) {
+	f.items = append(f.items, i.items...)
+}
+
+// Tag returns a Feed that matchs tag `t` excluding `e`.
+func (f Feed) Tags(t string, e []string, n int) (Feed, error) {
+	var inc, exc, out Feed
+	// include
+	for _, item := range f.items {
+		if item.hasTag(t) {
+			inc.items = append(inc.items, item)
+		}
+	}
+	// exclude
+	if e != nil {
+		for i, item := range inc.items {
+			for _, ex := range e {
+				if item.hasTag(ex) {
+					exc.items = append(inc.items[:i], inc.items[i+1:]...)
+					break
+				}
+			}
+		}
+		out.Merge(exc.items)
+	} else {
+		out.Merge(inc.items)
+	}
+
+	if n != 0 {
+		out.items = out.items[:n]
+	}
+	return out, nil
+}
+
 // Deadline removes items that are not within `r` days of date `d`.
 // `r` can be either positive or negative.
 // If `r` is zero, an error is returned.
