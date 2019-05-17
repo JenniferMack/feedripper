@@ -2,12 +2,10 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -21,7 +19,7 @@ type comm struct {
 	msg string
 }
 
-func getFeeds(conf io.Reader, indent bool) error {
+func getFeeds(conf io.Reader, pretty bool) error {
 	c, err := feed.ReadConfig(conf)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
@@ -41,7 +39,7 @@ func getFeeds(conf io.Reader, indent bool) error {
 			wg.Add(1)
 			go func(fd feed.Feed) {
 				defer wg.Done()
-				commChan <- fetch(fd, indent, v.RSSDir, v.JSONDir)
+				commChan <- fetch(fd, pretty, v.RSSDir, v.JSONDir)
 			}(f)
 		}
 		go func() {
@@ -71,7 +69,7 @@ func getFeeds(conf io.Reader, indent bool) error {
 	return nil
 }
 
-func fetch(f feed.Feed, indent bool, xDir, jDir string) comm {
+func fetch(f feed.Feed, pretty bool, xDir, jDir string) comm {
 	b, err := f.FetchURL()
 	if err != nil {
 		return comm{err: fmt.Errorf("%s", err)}
@@ -88,7 +86,7 @@ func fetch(f feed.Feed, indent bool, xDir, jDir string) comm {
 	}
 
 	path := filepath.Join(jDir, f.Name+".json")
-	n, l, err := mergeAndSave(fd, indent, path)
+	n, l, err := mergeAndSave(fd, pretty, path)
 	if err != nil {
 		return comm{err: fmt.Errorf("merge and save: %s", err)}
 	}
@@ -96,7 +94,7 @@ func fetch(f feed.Feed, indent bool, xDir, jDir string) comm {
 	return comm{msg: fmt.Sprintf("[%s/%d] %s -> %s", size(n), l, f.URL, path)}
 }
 
-func mergeFeeds(conf io.Reader, indent bool) error {
+func mergeFeeds(conf io.Reader, pretty bool) error {
 	c, err := feed.ReadConfig(conf)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
@@ -143,33 +141,17 @@ func mergeFeeds(conf io.Reader, indent bool) error {
 		log.Printf("%d posts after excluding tags", feeds.Len())
 
 		//output
-		fi, err := os.Create(v.Name + ".json")
+		b, err := formatFeed(feeds, pretty)
 		if err != nil {
-			return fmt.Errorf("opening file: %s", err)
-		}
-		// n, err := io.Copy(fi, &feeds)
-		// n, err := fi.Write([]byte(feeds.String()))
-		enc := json.NewEncoder(fi)
-		if indent {
-			enc.SetIndent("", "\t")
-			enc.SetEscapeHTML(false)
-		}
-		err = enc.Encode(feeds.List())
-		if err != nil {
-			return fmt.Errorf("encoding: %s", err)
+			return fmt.Errorf("json format: %s", err)
 		}
 
-		stat, err := fi.Stat()
+		path := v.Name + ".json"
+		err = ioutil.WriteFile(path, b, 0644)
 		if err != nil {
-			return fmt.Errorf("stat: %s", err)
+			return fmt.Errorf("json write: %s", err)
 		}
-		n := stat.Size()
-
-		err = fi.Close()
-		if err != nil {
-			return fmt.Errorf("closing: %s", err)
-		}
-		log.Printf("> [%s/%d] %s", size(int(n)), feeds.Len(), fi.Name())
+		log.Printf("> [%s/%d] %s", size(len(b)), feeds.Len(), path)
 	}
 	return nil
 }
