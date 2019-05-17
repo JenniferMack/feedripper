@@ -35,16 +35,14 @@ func main() {
 	switch os.Args[1] {
 	case "feed":
 		feedCmd.Parse(os.Args[2:])
-
 		confFile := openFileR(*flagFeedConfig, "feed config")
-		defer confFile.Close()
 
 		if *flagFeedFetch {
 			errs(getFeeds(confFile, *flagFeedFormat), "fetching")
 		}
 		if *flagFeedMerge {
 			// reset file pointer
-			_, err := confFile.Seek(io.SeekStart, 0)
+			_, err := confFile.Seek(0, io.SeekStart)
 			errs(err, "config seek")
 			errs(mergeFeeds(confFile, *flagFeedFormat), "merging")
 		}

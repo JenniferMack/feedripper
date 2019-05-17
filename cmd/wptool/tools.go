@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,15 +18,15 @@ func errs(e error, m string) {
 	}
 }
 
-func openFileR(s, m string) *os.File {
+func openFileR(s, m string) io.ReadSeeker {
 	if s == "-" {
 		return os.Stdin
 	}
-	f, err := os.Open(s)
-	if err != nil {
-		log.Fatalf("%s: %s", m, err)
-	}
-	return f
+	b, err := ioutil.ReadFile(s)
+	errs(err, m)
+
+	r := bytes.NewReader(b)
+	return r
 }
 
 func mergeAndSave(f wputil.Feed, ind bool, p string) (int, int, error) {
