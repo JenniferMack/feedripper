@@ -41,7 +41,7 @@ func getFeeds(conf io.Reader, indent bool) error {
 			wg.Add(1)
 			go func(fd feed.Feed) {
 				defer wg.Done()
-				commChan <- fetch(fd, v.RSSDir, v.JSONDir)
+				commChan <- fetch(fd, indent, v.RSSDir, v.JSONDir)
 			}(f)
 		}
 		go func() {
@@ -71,7 +71,7 @@ func getFeeds(conf io.Reader, indent bool) error {
 	return nil
 }
 
-func fetch(f feed.Feed, xDir, jDir string) comm {
+func fetch(f feed.Feed, indent bool, xDir, jDir string) comm {
 	b, err := f.FetchURL()
 	if err != nil {
 		return comm{err: fmt.Errorf("%s", err)}
@@ -88,7 +88,7 @@ func fetch(f feed.Feed, xDir, jDir string) comm {
 	}
 
 	path := filepath.Join(jDir, f.Name+".json")
-	n, l, err := mergeAndSave(fd, path)
+	n, l, err := mergeAndSave(fd, indent, path)
 	if err != nil {
 		return comm{err: fmt.Errorf("merge and save: %s", err)}
 	}

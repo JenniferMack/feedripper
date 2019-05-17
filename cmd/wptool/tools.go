@@ -28,9 +28,10 @@ func openFileR(s, m string) *os.File {
 	return f
 }
 
-func mergeAndSave(f wputil.Feed, p string) (int, int, error) {
+func mergeAndSave(f wputil.Feed, ind bool, p string) (int, int, error) {
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
+		// a nil []byte is ok to use, don't return
 		log.Printf("%s does not exist, skipping", p)
 	}
 
@@ -45,7 +46,13 @@ func mergeAndSave(f wputil.Feed, p string) (int, int, error) {
 	}
 	defer saved.Close()
 
-	n, err := io.Copy(saved, &f)
+	num := 0
+	if ind {
+		num, err = saved.Write([]byte(f.String()))
+	} else {
+		n, e := io.Copy(saved, &f)
+		num, err = int(n), e
+	}
 	if err != nil {
 		return 0, 0, fmt.Errorf("json write: %s", err)
 	}
@@ -53,7 +60,7 @@ func mergeAndSave(f wputil.Feed, p string) (int, int, error) {
 	if err != nil {
 		return 0, 0, fmt.Errorf("json save: %s", err)
 	}
-	return int(n), f.Len(), nil
+	return num, f.Len(), nil
 }
 
 func size(b int) string {
