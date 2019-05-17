@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -40,23 +40,19 @@ func mergeAndSave(f wputil.Feed, ind bool, p string) (int, int, error) {
 		return 0, 0, fmt.Errorf("load existing: %s", err)
 	}
 
-	saved, err := os.Create(p)
-	if err != nil {
-		return 0, 0, fmt.Errorf("file reset: %s", err)
-	}
-	defer saved.Close()
-
+	saved := bytes.Buffer{}
 	num := 0
 	if ind {
-		num, err = saved.Write([]byte(f.String()))
+		num, err = saved.WriteString(f.String())
 	} else {
-		n, e := io.Copy(saved, &f)
+		n, e := saved.ReadFrom(&f)
 		num, err = int(n), e
 	}
 	if err != nil {
 		return 0, 0, fmt.Errorf("json write: %s", err)
 	}
-	err = saved.Close()
+
+	err = ioutil.WriteFile(p, saved.Bytes(), 0644)
 	if err != nil {
 		return 0, 0, fmt.Errorf("json save: %s", err)
 	}
