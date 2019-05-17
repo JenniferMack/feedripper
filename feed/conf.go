@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -42,6 +43,10 @@ type (
 )
 
 func (f Feed) FetchURL() ([]byte, error) {
+	if status, ok := statusOK(f.URL); !ok {
+		return nil, fmt.Errorf("[%s] %s", status, f.URL)
+	}
+
 	resp, err := http.Get(f.URL)
 	if err != nil {
 		return nil, fmt.Errorf("getting feed: %s", err)
@@ -55,6 +60,20 @@ func (f Feed) FetchURL() ([]byte, error) {
 		return nil, fmt.Errorf("reading feed: %s", err)
 	}
 	return b.Bytes(), nil
+}
+
+func statusOK(u string) (string, bool) {
+	resp, err := http.Head(u)
+	if err != nil {
+		return err.Error(), false
+	}
+	if resp.StatusCode != 200 {
+		return resp.Status, false
+	}
+	if !strings.Contains(resp.Header.Get("content-type"), "text/xml") {
+		return resp.Header.Get("content-type"), false
+	}
+	return resp.Status, true
 }
 
 // ReadConfig returns a slice of `Config`.
