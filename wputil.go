@@ -36,6 +36,12 @@ func (f Feed) List() []Item {
 	return f.items
 }
 
+// Reverse returns a reversed slice of Items in the Feed
+func (f Feed) Reverse() []Item {
+	sort.Sort(f.items)
+	return f.items
+}
+
 // Len returns the number of feed items.
 func (f Feed) Len() int {
 	return f.items.Len()
