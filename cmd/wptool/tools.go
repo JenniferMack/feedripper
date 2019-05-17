@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,11 +30,11 @@ func openFileR(s, m string) io.ReadSeeker {
 	return r
 }
 
-func mergeAndSave(f wputil.Feed, ind bool, p string) (int, int, error) {
-	b, err := ioutil.ReadFile(p)
+func mergeAndSave(f wputil.Feed, pretty bool, path string) (int, int, error) {
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		// a nil []byte is ok to use, don't return
-		log.Printf("%s does not exist, skipping", p)
+		log.Printf("%s does not exist, skipping", path)
 	}
 
 	_, err = f.Write(b)
@@ -41,23 +42,34 @@ func mergeAndSave(f wputil.Feed, ind bool, p string) (int, int, error) {
 		return 0, 0, fmt.Errorf("load existing: %s", err)
 	}
 
-	saved := bytes.Buffer{}
-	num := 0
-	if ind {
-		num, err = saved.WriteString(f.String())
-	} else {
-		n, e := saved.ReadFrom(&f)
-		num, err = int(n), e
-	}
+	b, err = formatFeed(f, pretty)
 	if err != nil {
-		return 0, 0, fmt.Errorf("json write: %s", err)
+		return 0, 0, fmt.Errorf("json format: %s", err)
 	}
 
-	err = ioutil.WriteFile(p, saved.Bytes(), 0644)
+	err = ioutil.WriteFile(path, b, 0644)
 	if err != nil {
 		return 0, 0, fmt.Errorf("json save: %s", err)
 	}
-	return num, f.Len(), nil
+	return len(b), f.Len(), nil
+}
+
+func formatFeed(f wputil.Feed, pp bool) ([]byte, error) {
+	if f.Len() == 0 {
+		return nil, fmt.Errorf("no items to merge")
+	}
+
+	b := bytes.Buffer{}
+	enc := json.NewEncoder(&b)
+	if pp {
+		enc.SetIndent("", "\t")
+		enc.SetEscapeHTML(false)
+	}
+	err := enc.Encode(f.List())
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 func size(b int) string {
@@ -71,6 +83,5 @@ func size(b int) string {
 		div *= unit
 		exp++
 	}
-
 	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMG"[exp])
 }
