@@ -1,7 +1,7 @@
 name    := wptool
 ver     := $(shell git describe --always --dirty)
 app     := $(shell which $(name))
-gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go)
+gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go) $(wildcard feed/*.go)
 ldflags := -ldflags "-X main.version=$(ver) -w -s"
 
 install: $(app)
