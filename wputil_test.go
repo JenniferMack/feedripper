@@ -171,6 +171,9 @@ func TestInterface(t *testing.T) {
 		if f.List()[0].GUID != "foo" {
 			t.Error(f.String())
 		}
+		if f.Reverse()[0].GUID != "a" {
+			t.Error(f.String())
+		}
 	})
 
 	t.Run("many writer", func(t *testing.T) {
