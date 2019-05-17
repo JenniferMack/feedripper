@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -39,12 +40,13 @@ func main() {
 		defer confFile.Close()
 
 		if *flagFeedFetch {
-			errs(getFeeds(confFile, *flagFeedFormat), "feed fetch")
+			errs(getFeeds(confFile, *flagFeedFormat), "fetching")
 		}
 		if *flagFeedMerge {
-			_, err := confFile.Seek(0, 0)
+			// reset file pointer
+			_, err := confFile.Seek(io.SeekStart, 0)
 			errs(err, "config seek")
-			errs(mergeFeeds(confFile, *flagFeedFormat), "feed merge")
+			errs(mergeFeeds(confFile, *flagFeedFormat), "merging")
 		}
 		return
 
