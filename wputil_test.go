@@ -162,10 +162,14 @@ func TestInterface(t *testing.T) {
 
 	t.Run("merge items", func(t *testing.T) {
 		f := Feed{}
-		f.Write([]byte(s))
-		f.Merge([]Item{{Title: "a string of words", GUID: "foo"}})
-		if len(f.List()) != 5 {
+		f.Write([]byte(s2))
+		ti, _ := time.Parse(time.RFC3339, "2019-05-19T12:10:00Z")
+		f.Merge([]Item{{Title: "a string of words", GUID: "foo", PubDate: xmlTime{ti}}})
+		if len(f.List()) != 4 {
 			t.Error(len(f.List()))
+		}
+		if f.List()[0].GUID != "foo" {
+			t.Error(f.String())
 		}
 	})
 
