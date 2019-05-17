@@ -9,8 +9,24 @@ import (
 	"time"
 )
 
+type items []Item
+
+// Sort interface
+
+func (i items) Len() int {
+	return len(i)
+}
+
+func (i items) Less(j, k int) bool {
+	return i[j].PubDate.Before(i[k].PubDate.Time)
+}
+
+func (i items) Swap(j, k int) {
+	i[j], i[k] = i[k], i[j]
+}
+
 type Feed struct {
-	items []Item
+	items items
 	json  []byte
 	index int
 }
@@ -22,7 +38,7 @@ func (f Feed) List() []Item {
 
 // Len returns the number of feed items.
 func (f Feed) Len() int {
-	return len(f.items)
+	return f.items.Len()
 }
 
 // Append adds items without checking for duplicates or sorting.
@@ -98,6 +114,7 @@ func (f *Feed) Merge(n []Item) {
 	i := append(f.items, n...)
 	list := make(map[string]Item)
 
+	// deduplicate
 	for _, v := range i {
 		if p, ok := list[v.GUID]; ok {
 			if v.PubDate.After(p.PubDate.Time) {
@@ -112,10 +129,8 @@ func (f *Feed) Merge(n []Item) {
 	for _, v := range list {
 		f.items = append(f.items, v)
 	}
-
-	sort.Slice(f.items, func(i, j int) bool {
-		return f.items[i].PubDate.After(f.items[j].PubDate.Time)
-	})
+	// default sort is newest first
+	sort.Sort(sort.Reverse(f.items))
 }
 
 // Write appends the contents of `p` (JSON encoded slice of `Item`) to the Feed.
