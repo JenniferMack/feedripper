@@ -119,7 +119,7 @@ func mergeFeeds(conf io.Reader, indent bool) error {
 			if err != nil {
 				return fmt.Errorf("loading json: %s", err)
 			}
-			log.Printf("%d posts loaded from %s", feeds.Len(), path)
+			log.Printf("%d posts loaded, dupes removed [%s]", feeds.Len(), path)
 		}
 
 		// check deadline
