@@ -2,6 +2,7 @@ package wputil
 
 import (
 	"encoding/xml"
+	"strings"
 	"time"
 )
 
@@ -43,7 +44,7 @@ type (
 
 func (i Item) hasTag(t string) bool {
 	for _, v := range i.Categories {
-		if v.Name == t {
+		if strings.EqualFold(v.Name, t) {
 			return true
 		}
 	}
