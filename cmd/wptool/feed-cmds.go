@@ -32,7 +32,7 @@ func getFeeds(conf io.Reader, indent bool) error {
 	clock := time.Now()
 
 	for _, v := range c {
-		log.Printf("> starting %s, number %s...", v.Name, v.Number)
+		log.Printf("> Starting %s #%s...", v.Name, v.Number)
 		wg := sync.WaitGroup{}
 
 		commChan := make(chan comm)
@@ -63,7 +63,7 @@ func getFeeds(conf io.Reader, indent bool) error {
 		}
 
 		log.SetPrefix("[fetching] ")
-		log.Printf("> ...processed %d feeds in %s", len(v.Feeds), time.Since(clock))
+		log.Printf("> Processed %d feeds in %s", len(v.Feeds), time.Since(clock))
 		if errflag > 0 {
 			return fmt.Errorf("%d error(s) occured, check the log", errflag)
 		}
@@ -106,7 +106,7 @@ func mergeFeeds(conf io.Reader, indent bool) error {
 	log.SetPrefix("[ merging] ")
 
 	for _, v := range c {
-		log.Printf("starting %s, number %s...", v.Name, v.Number)
+		log.Printf("> Starting %s #%s...", v.Name, v.Number)
 		// holds all feeds
 		feeds := wputil.Feed{}
 		for _, f := range v.Feeds {
@@ -169,7 +169,7 @@ func mergeFeeds(conf io.Reader, indent bool) error {
 		if err != nil {
 			return fmt.Errorf("closing: %s", err)
 		}
-		log.Printf("[%s/%d] %s", size(int(n)), feeds.Len(), fi.Name())
+		log.Printf("> [%s/%d] %s", size(int(n)), feeds.Len(), fi.Name())
 	}
 	return nil
 }
