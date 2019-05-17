@@ -70,7 +70,7 @@ func statusOK(u string) (string, bool) {
 	if resp.StatusCode != 200 {
 		return resp.Status, false
 	}
-	if !strings.Contains(resp.Header.Get("content-type"), "text/xml") {
+	if !strings.Contains(resp.Header.Get("content-type"), "xml") {
 		return resp.Header.Get("content-type"), false
 	}
 	return resp.Status, true
