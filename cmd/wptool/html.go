@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"repo.local/wputil"
-	wpfeed "repo.local/wputil/feed"
+	"repo.local/wputil/wpfeed"
 	"repo.local/wputil/wphtml"
 )
 

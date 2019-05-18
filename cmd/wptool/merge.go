@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 
 	"repo.local/wputil"
-	"repo.local/wputil/feed"
+	"repo.local/wputil/wpfeed"
 )
 
 func mergeFeeds(conf io.Reader, pretty bool) error {
-	c, err := feed.ReadConfig(conf)
+	c, err := wpfeed.ReadConfig(conf)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}

@@ -8,7 +8,7 @@ import (
 
 	"gopkg.in/russross/blackfriday.v2"
 	"repo.local/wputil"
-	wpfeed "repo.local/wputil/feed"
+	"repo.local/wputil/wpfeed"
 )
 
 type RegexList struct {

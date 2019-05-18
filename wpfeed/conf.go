@@ -1,4 +1,4 @@
-package feed
+package wpfeed
 
 import (
 	"bytes"

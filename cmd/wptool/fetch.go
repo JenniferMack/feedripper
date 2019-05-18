@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"repo.local/wputil"
-	"repo.local/wputil/feed"
+	"repo.local/wputil/wpfeed"
 )
 
 type comm struct {
@@ -19,7 +19,7 @@ type comm struct {
 }
 
 func getFeeds(conf io.Reader, pretty bool) error {
-	c, err := feed.ReadConfig(conf)
+	c, err := wpfeed.ReadConfig(conf)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}
@@ -36,7 +36,7 @@ func getFeeds(conf io.Reader, pretty bool) error {
 
 		for _, f := range v.Feeds {
 			wg.Add(1)
-			go func(fd feed.Feed) {
+			go func(fd wpfeed.Feed) {
 				defer wg.Done()
 				commChan <- fetch(fd, pretty, v.RSSDir, v.JSONDir)
 			}(f)
@@ -68,13 +68,13 @@ func getFeeds(conf io.Reader, pretty bool) error {
 	return nil
 }
 
-func fetch(f feed.Feed, pretty bool, xDir, jDir string) comm {
+func fetch(f wpfeed.Feed, pretty bool, xDir, jDir string) comm {
 	b, err := f.FetchURL()
 	if err != nil {
 		return comm{err: fmt.Errorf("%s", err)}
 	}
 
-	err = feed.WriteRawXML(b, xDir, f.Name)
+	err = wpfeed.WriteRawXML(b, xDir, f.Name)
 	if err != nil {
 		return comm{err: fmt.Errorf("xml write: %s", err)}
 	}

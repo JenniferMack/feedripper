@@ -1,5 +1,5 @@
-// Package feed provides tools for getting and saving WordPress feeds.
-package feed
+// Package wpfeed provides tools for getting and saving WordPress feeds.
+package wpfeed
 
 import (
 	"io/ioutil"
