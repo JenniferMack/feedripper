@@ -58,7 +58,12 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 	}
 
 	for _, v := range conf {
-		html, err := wphtml.TaggedOutput(feed, v.Tags, "<br/>", regex)
+		feed, err := loadFeed(v.Name + ".json")
+		if err != nil {
+			return fmt.Errorf("reading %s: %s", v.Name+".json", err)
+		}
+
+		html, err := wphtml.TaggedOutput(feed, v.Tags, "<hr>", regex)
 		if err != nil {
 			return fmt.Errorf("html: %s", err)
 		}
