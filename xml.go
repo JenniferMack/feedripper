@@ -22,12 +22,12 @@ type (
 		Title      string     `xml:"title" json:"title"`
 		Link       string     `xml:"link" json:"link"`
 		PubDate    xmlTime    `xml:"pubDate" json:"pub_date"`
-		Categories []category `xml:"category" json:"categories"`
+		Categories []Category `xml:"category" json:"categories"`
 		GUID       string     `xml:"guid" json:"guid"`
 		Body       body       `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
 	}
 
-	category struct {
+	Category struct {
 		XMLName xml.Name `xml:"category" json:"-"`
 		Name    string   `xml:",cdata" json:"name"`
 	}
@@ -42,7 +42,7 @@ type (
 	}
 )
 
-func (i Item) hasTag(t string) bool {
+func (i Item) HasTag(t string) bool {
 	for _, v := range i.Categories {
 		if strings.EqualFold(v.Name, t) {
 			return true
@@ -53,7 +53,7 @@ func (i Item) hasTag(t string) bool {
 
 func (i Item) hasTagList(t []string) bool {
 	for _, tag := range t {
-		if i.hasTag(tag) {
+		if i.HasTag(tag) {
 			return true
 		}
 	}
