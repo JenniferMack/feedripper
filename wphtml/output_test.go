@@ -81,15 +81,21 @@ func TestPri(t *testing.T) {
 	item, tags := data()
 
 	t.Run("bar", func(t *testing.T) {
-		n := priority(item[0], tags)
+		n, o := priority(item[0], tags)
 		if n != 1 {
 			t.Error(n)
 		}
+		if o != 0 {
+			t.Error(o)
+		}
 	})
 	t.Run("foo", func(t *testing.T) {
-		n := priority(item[1], tags)
+		n, o := priority(item[1], tags)
 		if n != 0 {
 			t.Error(n)
+		}
+		if o != 0 {
+			t.Error(o)
 		}
 	})
 
@@ -127,14 +133,44 @@ func TestList(t *testing.T) {
 	t.Run("foo feed", func(t *testing.T) {
 		o := makeTaggedList(items, tags)
 		if o["Foo"].Len() != 3 {
-			t.Errorf("tag: %s / len %d", "Foo", o["Foo"].Len())
+			t.Errorf("tag: %s, len: %d", "Foo", o["Foo"].Len())
 		}
 	})
 
 	t.Run("bar feed", func(t *testing.T) {
 		o := makeTaggedList(items, tags)
 		if o["Bar"].Len() != 2 {
-			t.Errorf("tag: %s / len %d", "Bar", o["Bar"].Len())
+			t.Errorf("tag: %s, len: %d", "Bar", o["Bar"].Len())
+		}
+	})
+
+	t.Run("limit foo", func(t *testing.T) {
+		tags[1].Limit = uint(3)
+		o := makeTaggedList(items, tags)
+		if o["Foo"].Len() != 3 {
+			t.Errorf("tag: %s / len: %d", "Foo", o["Foo"].Len())
+		}
+		if o["Bar"].Len() != 2 {
+			t.Errorf("tag: %s / len: %d", "Bar", o["Bar"].Len())
+		}
+
+		tags[1].Limit = uint(2)
+		o = makeTaggedList(items, tags)
+		if o["Foo"].Len() != 2 {
+			t.Errorf("tag: %s / len: %d", "Foo", o["Foo"].Len())
+		}
+		if o["Bar"].Len() != 3 {
+			t.Errorf("tag: %s / len: %d", "Bar", o["Bar"].Len())
+		}
+
+		tags[0].Limit = uint(1)
+		tags[1].Limit = uint(0)
+		o = makeTaggedList(items, tags)
+		if o["Foo"].Len() != 2 {
+			t.Errorf("tag: %s / len: %d", "Foo", o["Foo"].Len())
+		}
+		if o["Bar"].Len() != 3 {
+			t.Errorf("tag: %s / len: %d", "Bar", o["Bar"].Len())
 		}
 	})
 }
