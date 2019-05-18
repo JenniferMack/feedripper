@@ -148,29 +148,19 @@ func TestList(t *testing.T) {
 		tags[1].Limit = uint(3)
 		o := makeTaggedList(items, tags)
 		if o["Foo"].Len() != 3 {
-			t.Errorf("tag: %s / len: %d", "Foo", o["Foo"].Len())
+			t.Errorf("tag: %s, len: %d", "Foo", o["Foo"].Len())
 		}
 		if o["Bar"].Len() != 2 {
-			t.Errorf("tag: %s / len: %d", "Bar", o["Bar"].Len())
+			t.Errorf("tag: %s, len: %d", "Bar", o["Bar"].Len())
 		}
 
 		tags[1].Limit = uint(2)
 		o = makeTaggedList(items, tags)
 		if o["Foo"].Len() != 2 {
-			t.Errorf("tag: %s / len: %d", "Foo", o["Foo"].Len())
+			t.Errorf("tag: %s, len: %d", "Foo", o["Foo"].Len())
 		}
 		if o["Bar"].Len() != 3 {
-			t.Errorf("tag: %s / len: %d", "Bar", o["Bar"].Len())
-		}
-
-		tags[0].Limit = uint(1)
-		tags[1].Limit = uint(0)
-		o = makeTaggedList(items, tags)
-		if o["Foo"].Len() != 2 {
-			t.Errorf("tag: %s / len: %d", "Foo", o["Foo"].Len())
-		}
-		if o["Bar"].Len() != 3 {
-			t.Errorf("tag: %s / len: %d", "Bar", o["Bar"].Len())
+			t.Errorf("tag: %s, len: %d", "Bar", o["Bar"].Len())
 		}
 	})
 }
