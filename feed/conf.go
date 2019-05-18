@@ -22,10 +22,12 @@ type (
 		Language   string    `json:"language"`
 		SiteURL    string    `json:"site_url"`
 		MainTagNum uint      `json:"main_tag_num"`
-		Tags       []Tag     `json:"tags"`
+		Tags       Tags      `json:"tags"`
 		Exclude    []string  `json:"exclude"`
 		Feeds      []Feed    `json:"feeds"`
 	}
+
+	Tags []Tag
 
 	// Tag holds the tag name and priority
 	Tag struct {
@@ -41,6 +43,11 @@ type (
 		URL  string `json:"url"`
 	}
 )
+
+// sort interface for Tags
+func (t Tags) Len() int           { return len(t) }
+func (t Tags) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t Tags) Less(i, j int) bool { return t[i].Priority < t[j].Priority }
 
 func (f Feed) FetchURL() ([]byte, error) {
 	if status, ok := statusOK(f.URL); !ok {
