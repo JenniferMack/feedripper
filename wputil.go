@@ -2,6 +2,7 @@
 package wputil
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -152,7 +153,7 @@ func (f *Feed) Write(p []byte) (n int, err error) {
 	}
 	t := []Item{}
 
-	err = json.Unmarshal(p, &t)
+	err = json.NewDecoder(bytes.NewReader(p)).Decode(&t)
 	if err != nil {
 		return 0, fmt.Errorf("json write: %v", err)
 	}
