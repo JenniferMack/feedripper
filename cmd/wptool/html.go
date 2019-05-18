@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"repo.local/wputil"
 	"repo.local/wputil/wpfeed"
@@ -20,11 +22,22 @@ func regexDefault() []wphtml.RegexList {
 	return re
 }
 
-func outputHTMLByTags(f, c, re io.Reader, w io.Writer) error {
-	feed, err := wputil.ReadWPJSON(f)
+func loadFeed(f string) (wputil.Feed, error) {
+	var feed wputil.Feed
+
+	j, err := ioutil.ReadFile(f)
 	if err != nil {
-		return fmt.Errorf("loading feed: %s", err)
+		return feed, fmt.Errorf("reading %s: %s", f, err)
 	}
+
+	feed, err = wputil.ReadWPJSON(bytes.NewReader(j))
+	if err != nil {
+		return feed, fmt.Errorf("loading feed: %s", err)
+	}
+	return feed, nil
+}
+
+func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 	conf, err := wpfeed.ReadConfig(c)
 	if err != nil {
 		return fmt.Errorf("loading config: %s", err)
