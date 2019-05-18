@@ -15,6 +15,7 @@ var flagFeedConfig = feedCmd.String("c", "config.json", "config file location")
 var flagFeedFetch = feedCmd.Bool("fetch", false, "retrieve the feeds")
 var flagFeedMerge = feedCmd.Bool("merge", false, "merge the feeds")
 var flagFeedFormat = feedCmd.Bool("pp", false, "pretty print feeds")
+var flagFeedHTML = feedCmd.Bool("html", false, "generate html output")
 
 func init() {
 	flag.Parse()
@@ -45,6 +46,12 @@ func main() {
 			_, err := confFile.Seek(0, io.SeekStart)
 			errs(err, "config seek")
 			errs(mergeFeeds(confFile, *flagFeedFormat), "merging")
+		}
+		if *flagFeedHTML {
+			// reset file pointer
+			_, err := confFile.Seek(0, io.SeekStart)
+			errs(err, "config seek")
+			errs(outputHTMLByTags(confFile, nil, os.Stdout), "html")
 		}
 		return
 
