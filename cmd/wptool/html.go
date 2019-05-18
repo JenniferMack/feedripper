@@ -68,9 +68,9 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 			return fmt.Errorf("html: %s", err)
 		}
 
-		_, err = w.Write(html)
+		err = ioutil.WriteFile(v.Name+".html", html, 0644)
 		if err != nil {
-			return fmt.Errorf("write html: %s", err)
+			return fmt.Errorf("writing html: %s", err)
 		}
 	}
 	return nil
