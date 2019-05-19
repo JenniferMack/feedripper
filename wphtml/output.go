@@ -107,7 +107,7 @@ func makePost(i wputil.Item, re []RegexList) []byte {
 <div class="body-text">
 %s
 </div>
-`, i.Link, i.Title, makeHTML(h))
+`, i.Link, smartenString(i.Title), makeHTML(h))
 	return []byte(s)
 }
 
