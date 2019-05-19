@@ -15,13 +15,21 @@ func TestOORange(t *testing.T) {
 		{Priority: 2},
 		{Priority: 1},
 	}
-	if !t1.PriorityOutOfRange() {
+	t4 := Tags{
+		{Priority: 0},
+		{Priority: 1},
+		{Priority: 2},
+	}
+	if !t1.PriOutOfRange() {
 		t.Error("out of range")
 	}
-	if t2.PriorityOutOfRange() {
+	if t2.PriOutOfRange() {
 		t.Error("out of range")
 	}
-	if !t3.PriorityOutOfRange() {
+	if !t3.PriOutOfRange() {
+		t.Error("out of range")
+	}
+	if t4.PriOutOfRange() {
 		t.Error("out of range")
 	}
 }
