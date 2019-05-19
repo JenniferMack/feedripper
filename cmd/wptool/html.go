@@ -15,10 +15,30 @@ import (
 
 func regexDefault() []wphtml.RegexList {
 	re := []wphtml.RegexList{
-		{
-			Pattern: "foo",
-			Replace: "bar",
-		},
+		{Pattern: `\[caption .+?\]`,
+			Replace: "<figure>\n"},
+		{Pattern: `> ?(.*)\[/caption\]`,
+			Replace: ">\n<figcaption>$1</figcaption>\n</figure>\n"},
+		{Pattern: `\[audio (.+)\]`,
+			Replace: `<a href="$1">audio link</a>`},
+		{Pattern: `\[video ?\](.+)\[/video\]`,
+			Replace: `<a href="$1"><em>Video link</em></a>`},
+		{Pattern: `<iframe .*src="(.+?)".*?></iframe>`,
+			Replace: "\n" + `<a href="$1"><em>Video link</em></a>` + "\n"},
+		{Pattern: ` `,
+			Replace: ` `}, // non-breaking space literal
+		{Pattern: `&nbsp;`,
+			Replace: ` `}, // non-breaking space entity
+		{Pattern: `‘`,
+			Replace: `'`},
+		{Pattern: `’`,
+			Replace: `'`},
+		{Pattern: `“`,
+			Replace: `"`},
+		{Pattern: `”`,
+			Replace: `"`},
+		{Pattern: `(</?h)\d.*?(>)`,
+			Replace: `${1}3$2`},
 	}
 	return re
 }
