@@ -19,14 +19,14 @@ type comm struct {
 }
 
 func getFeeds(conf io.Reader, pretty bool) error {
+	log.SetFlags(0)
+	log.SetPrefix("[fetching] ")
+	clock := time.Now()
+
 	c, err := wpfeed.ReadConfig(conf)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}
-
-	log.SetFlags(0)
-	log.SetPrefix("[fetching] ")
-	clock := time.Now()
 
 	for _, v := range c {
 		log.Printf("> Fetching %s #%s...", v.Name, v.Number)
