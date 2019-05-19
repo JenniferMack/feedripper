@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"repo.local/wputil"
-	"repo.local/wputil/feed"
-	wpfeed "repo.local/wputil/feed"
+	"repo.local/wputil/wpfeed"
 )
 
 func TestHeader(t *testing.T) {
@@ -16,7 +15,7 @@ func TestHeader(t *testing.T) {
 	}
 }
 
-func data() ([]wputil.Item, feed.Tags) {
+func data() ([]wputil.Item, wpfeed.Tags) {
 	i := []wputil.Item{
 		{
 			Title: "one",
@@ -60,7 +59,7 @@ func data() ([]wputil.Item, feed.Tags) {
 			},
 		},
 	}
-	t := feed.Tags{
+	t := wpfeed.Tags{
 		{
 			Text:     "bar",
 			Name:     "Bar",
