@@ -15,11 +15,11 @@ import (
 type RegexList struct {
 	Pattern string
 	Replace string
-	Re      *regexp.Regexp
+	re      *regexp.Regexp
 }
 
 func (r *RegexList) Compile() {
-	r.Re = regexp.MustCompile(r.Pattern)
+	r.re = regexp.MustCompile(r.Pattern)
 }
 
 func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexList) ([]byte, error) {
@@ -98,7 +98,7 @@ func makeHeader(h string) []byte {
 func makePost(i wputil.Item, re []RegexList) []byte {
 	h := i.Body.Text
 	for _, r := range re {
-		h = r.Re.ReplaceAllString(h, r.Replace)
+		h = r.re.ReplaceAllString(h, r.Replace)
 	}
 
 	s := fmt.Sprintf(`
