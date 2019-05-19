@@ -49,6 +49,18 @@ func (t Tags) Len() int           { return len(t) }
 func (t Tags) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t Tags) Less(i, j int) bool { return t[i].Priority < t[j].Priority }
 
+func (t Tags) PriOutOfRange() bool {
+	idx := uint(0)
+	cmp := uint(len(t) - 1)
+
+	for _, v := range t {
+		if v.Priority > idx {
+			idx = v.Priority
+		}
+	}
+	return idx > cmp
+}
+
 func (f Feed) FetchURL() ([]byte, error) {
 	if status, ok := statusOK(f.URL); !ok {
 		return nil, fmt.Errorf("[%s] %s", status, f.URL)
