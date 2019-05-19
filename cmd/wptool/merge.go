@@ -21,7 +21,7 @@ func mergeFeeds(conf io.Reader, pretty bool) error {
 	log.SetPrefix("[ merging] ")
 
 	for _, v := range c {
-		log.Printf("> Starting %s #%s...", v.Name, v.Number)
+		log.Printf("> Merging %s #%s...", v.Name, v.Number)
 		// holds all feeds
 		feeds := wputil.Feed{}
 		for _, f := range v.Feeds {

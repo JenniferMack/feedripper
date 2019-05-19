@@ -29,7 +29,7 @@ func getFeeds(conf io.Reader, pretty bool) error {
 	clock := time.Now()
 
 	for _, v := range c {
-		log.Printf("> Starting %s #%s...", v.Name, v.Number)
+		log.Printf("> Fetching %s #%s...", v.Name, v.Number)
 		wg := sync.WaitGroup{}
 
 		commChan := make(chan comm)

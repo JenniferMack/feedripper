@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 
 	"repo.local/wputil"
 	"repo.local/wputil/wpfeed"
@@ -20,11 +23,25 @@ func regexDefault() []wphtml.RegexList {
 	return re
 }
 
-func outputHTMLByTags(f, c, re io.Reader, w io.Writer) error {
-	feed, err := wputil.ReadWPJSON(f)
+func loadFeed(f string) (wputil.Feed, error) {
+	var feed wputil.Feed
+
+	j, err := ioutil.ReadFile(f)
 	if err != nil {
-		return fmt.Errorf("loading feed: %s", err)
+		return feed, fmt.Errorf("reading %s: %s", f, err)
 	}
+
+	feed, err = wputil.ReadWPJSON(bytes.NewReader(j))
+	if err != nil {
+		return feed, fmt.Errorf("loading feed: %s", err)
+	}
+	return feed, nil
+}
+
+func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
+	log.SetFlags(0)
+	log.SetPrefix("[    html] ")
+
 	conf, err := wpfeed.ReadConfig(c)
 	if err != nil {
 		return fmt.Errorf("loading config: %s", err)
@@ -45,14 +62,23 @@ func outputHTMLByTags(f, c, re io.Reader, w io.Writer) error {
 	}
 
 	for _, v := range conf {
-		html, err := wphtml.TaggedOutput(feed, v.Tags, "<br/>", regex)
+		log.Printf("> Writing HTML for %s, #%s...", v.Name, v.Number)
+		path := v.Name + ".json"
+		feed, err := loadFeed(path)
+		if err != nil {
+			return fmt.Errorf("reading %s: %s", path, err)
+		}
+
+		html, err := wphtml.TaggedOutput(feed, v.Tags, "<hr>", regex)
 		if err != nil {
 			return fmt.Errorf("html: %s", err)
 		}
 
-		_, err = w.Write(html)
+		path = v.Name + ".html"
+		err = ioutil.WriteFile(path, html, 0644)
+		log.Printf("> [%s/%d] %s", size(len(html)), 0, path)
 		if err != nil {
-			return fmt.Errorf("write html: %s", err)
+			return fmt.Errorf("writing %s: %s", path, err)
 		}
 	}
 	return nil
