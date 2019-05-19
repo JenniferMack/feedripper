@@ -39,6 +39,7 @@ func main() {
 	if *flagRegex {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
+		enc.SetEscapeHTML(false)
 		enc.Encode(regexDefault())
 		return
 	}
