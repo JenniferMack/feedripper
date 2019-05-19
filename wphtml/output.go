@@ -3,10 +3,12 @@ package wphtml
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"regexp"
 	"sort"
 	"time"
 
+	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/russross/blackfriday.v2"
 	"repo.local/wputil"
 	"repo.local/wputil/wpfeed"
@@ -101,6 +103,9 @@ func makePost(i wputil.Item, re []RegexList) []byte {
 		h = r.re.ReplaceAllString(h, r.Replace)
 	}
 
+	clean := html.UnescapeString(sanitize(h))
+	clean = makeHTML(clean)
+
 	s := fmt.Sprintf(`
 <h2 class="item-title">
   <a href="%s">%s</a>
@@ -110,7 +115,7 @@ func makePost(i wputil.Item, re []RegexList) []byte {
 <div class="body-text">
 %s
 </div>
-`, i.Link, smartenString(i.Title), i.PubDate.Format(time.RFC3339), makeHTML(h))
+`, i.Link, smartenString(i.Title), i.PubDate.Format(time.RFC3339), clean)
 	return []byte(s)
 }
 
@@ -139,4 +144,15 @@ func makeHTML(s string) string {
 		),
 	))
 	return string(bf)
+}
+
+func sanitize(h string) string {
+	bm := bluemonday.NewPolicy()
+	bm.AllowAttrs("href", "title").OnElements("a")
+	bm.AllowAttrs("src").OnElements("img")
+	bm.AllowElements("ul", "ol", "li", "br", "p", "em",
+		"h1", "h2", "h3", "h4", "h5", "h6",
+		"blockquote", "strong", "figure", "figcaption")
+
+	return bm.Sanitize(h)
 }
