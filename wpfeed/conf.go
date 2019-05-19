@@ -98,6 +98,16 @@ func statusOK(u string) (string, bool) {
 // ReadConfig returns a slice of `Config`.
 func ReadConfig(in io.Reader) ([]Config, error) {
 	c := []Config{}
+
 	err := json.NewDecoder(in).Decode(&c)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range c {
+		if v.Tags.PriOutOfRange() {
+			return nil, fmt.Errorf("[%s] priority out of range", v.Name)
+		}
+	}
 	return c, err
 }
