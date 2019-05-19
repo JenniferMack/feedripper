@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 
 var version = "foo"
 var flagVers = flag.Bool("v", false, "print version number")
+var flagRegex = flag.Bool("D", false, "print default regex patterns (json)")
 
 var feedCmd = flag.NewFlagSet("feed", flag.ExitOnError)
 var flagFeedConfig = feedCmd.String("c", "config.json", "config file location")
@@ -28,8 +30,16 @@ func main() {
 		return
 	}
 
+	// Top level flags
 	if *flagVers {
 		fmt.Printf("%s version: %s\n", os.Args[0], version)
+		return
+	}
+
+	if *flagRegex {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		enc.Encode(regexDefault())
 		return
 	}
 
