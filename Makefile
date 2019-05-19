@@ -3,8 +3,12 @@ ver     := $(shell git describe --always --dirty)
 app     := $(shell which $(name))
 gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go) $(wildcard wpfeed/*.go)
 ldflags := -ldflags "-X main.version=$(ver) -w -s"
+binlist := wptool feed-utils recover
 
 install: $(app)
+
+release: $(app)
+	tar -czf $(name)-$(ver).tgz -C $(GOBIN) $(binlist)
 
 $(app): $(gofiles)
 	go install $(ldflags) ./...
