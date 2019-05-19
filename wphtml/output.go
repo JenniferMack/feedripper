@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"time"
 
 	"gopkg.in/russross/blackfriday.v2"
 	"repo.local/wputil"
@@ -99,15 +100,17 @@ func makePost(i wputil.Item, re []RegexList) []byte {
 	for _, r := range re {
 		h = r.Re.ReplaceAllString(h, r.Replace)
 	}
+
 	s := fmt.Sprintf(`
 <h2 class="item-title">
   <a href="%s">%s</a>
 </h2>
+<!-- pubDate: %s -->
 
 <div class="body-text">
 %s
 </div>
-`, i.Link, smartenString(i.Title), makeHTML(h))
+`, i.Link, smartenString(i.Title), i.PubDate.Format(time.RFC3339), makeHTML(h))
 	return []byte(s)
 }
 
