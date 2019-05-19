@@ -5,11 +5,12 @@ gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go) $(wildcard wpfeed/*.go)
 	$(wildcard wphtml/*.go)
 ldflags := -ldflags "-X main.version=$(ver) -w -s"
 binlist := wptool feed-utils recover
+relDir  := releases
 
 install: $(app)
 
-release: $(app)
-	tar -czf $(name)-$(ver).tgz -C $(GOBIN) $(binlist)
+pkg: $(app) | $(relDir)
+	tar -czf $(relDir)/$(name)-$(ver).tgz -C $(GOBIN) $(binlist)
 
 $(app): $(gofiles)
 	go install $(ldflags) ./...
@@ -21,3 +22,6 @@ $(name): $(gofiles)
 $(name)-mac: $(gofiles)
 	cd cmd/$(name); GOOS=darwin go build $(ldflags) -o $(name)-mac ./...
 	mv cmd/$(name)/$(name)-mac .
+
+$(relDir): 
+	mkdir $@
