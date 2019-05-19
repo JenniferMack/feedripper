@@ -1,7 +1,8 @@
 name    := wptool
 ver     := $(shell git describe --always --dirty)
 app     := $(shell which $(name))
-gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go) $(wildcard wpfeed/*.go)
+gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go) $(wildcard wpfeed/*.go) \
+	$(wildcard wphtml/*.go)
 ldflags := -ldflags "-X main.version=$(ver) -w -s"
 binlist := wptool feed-utils recover
 
