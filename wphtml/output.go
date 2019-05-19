@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"time"
 
 	"gopkg.in/russross/blackfriday.v2"
 	"repo.local/wputil"
@@ -26,8 +27,8 @@ func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexLi
 
 	html := bytes.Buffer{}
 	for _, t := range tags {
+		html.Write(makeHeader(t.Name))
 		for _, i := range f[t.Name].List() {
-			html.Write(makeHeader(t.Name))
 			html.Write(makePost(i, reg))
 			fmt.Fprintf(&html, "\n%s\n\n", sep)
 		}
@@ -99,15 +100,17 @@ func makePost(i wputil.Item, re []RegexList) []byte {
 	for _, r := range re {
 		h = r.Re.ReplaceAllString(h, r.Replace)
 	}
+
 	s := fmt.Sprintf(`
 <h2 class="item-title">
   <a href="%s">%s</a>
 </h2>
+<!-- pubDate: %s -->
 
 <div class="body-text">
 %s
 </div>
-`, i.Link, i.Title, makeHTML(h))
+`, i.Link, smartenString(i.Title), i.PubDate.Format(time.RFC3339), makeHTML(h))
 	return []byte(s)
 }
 
