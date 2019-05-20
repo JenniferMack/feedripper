@@ -48,15 +48,15 @@ func (f Feed) Len() int {
 	return f.items.Len()
 }
 
-// Append adds items without checking for duplicates or sorting.
-func (f *Feed) Append(i Feed) {
-	f.items = append(f.items, i.items...)
-}
-
-// AppendItem adds a single item to a feed.
-func (f *Feed) AppendItem(i Item) {
-	f.items = append(f.items, i)
-}
+// // Append adds items without checking for duplicates or sorting.
+// func (f *Feed) Append(i Feed) {
+// 	f.items = append(f.items, i.items...)
+// }
+//
+// // AppendItem adds a single item to a feed.
+// func (f *Feed) AppendItem(i Item) {
+// 	f.items = append(f.items, i)
+// }
 
 // Include returns a Feed containing only the posts with given tags
 func (f Feed) Include(l []string) Feed {
