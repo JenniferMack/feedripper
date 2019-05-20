@@ -25,7 +25,7 @@ func mergeFeeds(conf io.Reader, pretty bool) error {
 		// holds all feeds
 		feeds := wputil.Feed{}
 		for _, f := range v.Feeds {
-			path := filepath.Join(v.JSONDir, f.Name+".json")
+			path := filepath.Join(v.WorkDir, v.JSONDir, f.Name+".json")
 			d, err := ioutil.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("reading %s: %s", path, err)
@@ -63,7 +63,8 @@ func mergeFeeds(conf io.Reader, pretty bool) error {
 			return fmt.Errorf("json format: %s", err)
 		}
 
-		path := fmt.Sprintf(nameFmt, v.Name, v.Number, "json")
+		dirs := filepath.Join(v.WorkDir, v.Name)
+		path := fmt.Sprintf(nameFmt, dirs, v.Number, "json")
 		err = ioutil.WriteFile(path, b, 0644)
 		if err != nil {
 			return fmt.Errorf("json write: %s", err)

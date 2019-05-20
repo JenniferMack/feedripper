@@ -38,7 +38,7 @@ func getFeeds(conf io.Reader, pretty bool) error {
 			wg.Add(1)
 			go func(fd wpfeed.Feed) {
 				defer wg.Done()
-				commChan <- fetch(fd, pretty, v.RSSDir, v.JSONDir)
+				commChan <- fetch(fd, pretty, v.WorkDir, v.RSSDir, v.JSONDir)
 			}(f)
 		}
 		go func() {
@@ -68,13 +68,14 @@ func getFeeds(conf io.Reader, pretty bool) error {
 	return nil
 }
 
-func fetch(f wpfeed.Feed, pretty bool, xDir, jDir string) comm {
+func fetch(f wpfeed.Feed, pretty bool, wDir, xDir, jDir string) comm {
 	b, err := f.FetchURL()
 	if err != nil {
 		return comm{err: fmt.Errorf("%s", err)}
 	}
 
-	err = wpfeed.WriteRawXML(b, xDir, f.Name)
+	path := filepath.Join(wDir, xDir)
+	err = wpfeed.WriteRawXML(b, path, f.Name)
 	if err != nil {
 		return comm{err: fmt.Errorf("xml write: %s", err)}
 	}
@@ -84,7 +85,7 @@ func fetch(f wpfeed.Feed, pretty bool, xDir, jDir string) comm {
 		return comm{err: fmt.Errorf("json load: %s", err)}
 	}
 
-	path := filepath.Join(jDir, f.Name+".json")
+	path = filepath.Join(wDir, jDir, f.Name+".json")
 	n, l, err := mergeAndSave(fd, pretty, path)
 	if err != nil {
 		return comm{err: fmt.Errorf("merge and save: %s", err)}
