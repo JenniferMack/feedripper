@@ -39,57 +39,33 @@ func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexLi
 }
 
 func makeTaggedList(items []wputil.Item, tags wpfeed.Tags) map[string]wputil.Feed {
-	tmp := make([]wputil.Feed, len(tags))
-	for _, p := range items {
-		t1, t2 := priority(p, tags)
-		if tags[t1].Limit > 0 {
-			if tmp[t1].Len() < int(tags[t1].Limit) {
-				tmp[t1].AppendItem(p)
-				continue
-			} else {
-				tmp[t2].AppendItem(p)
-				continue
+	// priority sorted copy of tags
+	byPri := make(wpfeed.Tags, len(tags))
+	copy(byPri, tags)
+	sort.Sort(byPri)
+
+	list := make(map[string][]wputil.Item, len(tags))
+	for _, post := range items {
+		for _, tag := range byPri {
+			if tag.Limit > 0 {
+				if len(list[tag.Name]) >= int(tag.Limit) {
+					continue // next tag
+				}
+			}
+			if post.HasTag(tag.Text) {
+				list[tag.Name] = append(list[tag.Name], post)
+				break // next post
 			}
 		}
-		tmp[t1].AppendItem(p)
 	}
 
-	f := make(map[string]wputil.Feed)
-	for k, v := range tmp {
-		f[tags[k].Name] = v
+	out := make(map[string]wputil.Feed)
+	for k, v := range list {
+		t := wputil.Feed{}
+		t.Merge(v)
+		out[k] = t
 	}
-	return f
-}
-
-func priority(i wputil.Item, t wpfeed.Tags) (uint, uint) {
-	st := make(wpfeed.Tags, len(t))
-	copy(st, t)
-	sort.Sort(st)
-
-	var first, second uint
-	finder := struct {
-		found bool
-		pos   int
-	}{}
-	for k, v := range st {
-		if i.HasTag(v.Text) {
-			// map sorted priority to original priority
-			first = t[k].Priority
-			finder.found = true
-			finder.pos = k
-			break
-		}
-	}
-	for k, v := range st {
-		if finder.found && k == finder.pos {
-			continue
-		}
-		if i.HasTag(v.Text) {
-			second = t[k].Priority
-			break
-		}
-	}
-	return first, second
+	return out
 }
 
 func makeHeader(h string) []byte {
