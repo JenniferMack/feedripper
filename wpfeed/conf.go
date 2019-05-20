@@ -13,18 +13,19 @@ import (
 type (
 	// Config holds the information for saving WordPress feeds.
 	Config struct {
-		Name     string    `json:"name"`
-		Number   string    `json:"number"`
-		Deadline time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
-		Days     int       `json:"days"`
-		WorkDir  string    `json:"work_dir"`
-		JSONDir  string    `json:"json_dir"`
-		RSSDir   string    `json:"rss_dir"`
-		Language string    `json:"language"`
-		SiteURL  string    `json:"site_url"`
-		Tags     Tags      `json:"tags"`
-		Exclude  []string  `json:"exclude"`
-		Feeds    []Feed    `json:"feeds"`
+		Name      string    `json:"name"`
+		Number    string    `json:"number"`
+		Deadline  time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
+		Days      int       `json:"days"`
+		WorkDir   string    `json:"work_dir"`
+		JSONDir   string    `json:"json_dir"`
+		RSSDir    string    `json:"rss_dir"`
+		Language  string    `json:"language"`
+		SiteURL   string    `json:"site_url"`
+		Separator string    `json:"separator"`
+		Tags      Tags      `json:"tags"`
+		Exclude   []string  `json:"exclude"`
+		Feeds     []Feed    `json:"feeds"`
 	}
 
 	Tags []Tag
