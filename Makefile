@@ -9,6 +9,9 @@ relDir  := releases
 
 install: $(app)
 
+test:
+	go test $$(go list ./...)
+
 pkg: $(app) | $(relDir)
 	tar -czf $(relDir)/$(name)-$(ver).tgz -C $(GOBIN) $(binlist)
 
