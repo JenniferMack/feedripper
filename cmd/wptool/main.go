@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var version = "foo"
+var version string
 var flagVers = flag.Bool("v", false, "print version number")
 var flagRegex = flag.Bool("D", false, "print default regex patterns (json)")
 
