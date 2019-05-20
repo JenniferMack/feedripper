@@ -83,7 +83,7 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 
 	for _, v := range conf {
 		log.Printf("> Writing HTML for %s, #%s...", v.Name, v.Number)
-		path := v.Name + ".json"
+		path := fmt.Sprintf(nameFmt, v.Name, v.Number, "json")
 		feed, err := loadFeed(path)
 		if err != nil {
 			return fmt.Errorf("reading %s: %s", path, err)
@@ -94,7 +94,7 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 			return fmt.Errorf("html: %s", err)
 		}
 
-		path = v.Name + ".html"
+		path = fmt.Sprintf(nameFmt, v.Name, v.Number, "html")
 		err = ioutil.WriteFile(path, html, 0644)
 		log.Printf("> [%s/%d] %s", size(len(html)), 0, path)
 		if err != nil {

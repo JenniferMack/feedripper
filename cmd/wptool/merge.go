@@ -63,7 +63,7 @@ func mergeFeeds(conf io.Reader, pretty bool) error {
 			return fmt.Errorf("json format: %s", err)
 		}
 
-		path := v.Name + ".json"
+		path := fmt.Sprintf(nameFmt, v.Name, v.Number, "json")
 		err = ioutil.WriteFile(path, b, 0644)
 		if err != nil {
 			return fmt.Errorf("json write: %s", err)
