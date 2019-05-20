@@ -92,7 +92,7 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 			return fmt.Errorf("reading %s: %s", path, err)
 		}
 
-		html, err := wphtml.TaggedOutput(feed, v.Tags, "<hr>", regex)
+		html, err := wphtml.TaggedOutput(feed, v.Tags, v.Separator, regex)
 		if err != nil {
 			return fmt.Errorf("html: %s", err)
 		}
