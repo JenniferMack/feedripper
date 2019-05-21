@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"repo.local/wputil"
@@ -85,6 +86,9 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 	for _, v := range conf {
 		log.Printf("> Writing HTML for %s, #%s...", v.Name, v.Number)
 
+		if v.IsWorkDir(os.Getwd()) {
+			v.WorkDir = "."
+		}
 		dirs := filepath.Join(v.WorkDir, v.Name)
 		path := fmt.Sprintf(nameFmt, dirs, v.Number, "json")
 		feed, err := loadFeed(path)

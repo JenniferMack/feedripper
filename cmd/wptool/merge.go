@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"repo.local/wputil"
@@ -24,6 +25,9 @@ func mergeFeeds(conf io.Reader, pretty bool) error {
 		log.Printf("> Merging %s #%s...", v.Name, v.Number)
 		// holds all feeds
 		feeds := wputil.Feed{}
+		if v.IsWorkDir(os.Getwd()) {
+			v.WorkDir = "."
+		}
 		for _, f := range v.Feeds {
 			path := filepath.Join(v.WorkDir, v.JSONDir, f.Name+".json")
 			d, err := ioutil.ReadFile(path)
