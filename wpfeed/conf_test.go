@@ -3,7 +3,18 @@ package wpfeed
 import "testing"
 
 func TestWorkDir(t *testing.T) {
-	c := Config{}
+	c := Config{
+		WorkDir: "foo",
+	}
+	// mock os.PWD
+	pwd := "/home/user/feed/foo"
+	if !c.IsWorkDir(pwd, nil) {
+		t.Error("in work dir")
+	}
+	pwd = "/home/user/feed/bar"
+	if c.IsWorkDir(pwd, nil) {
+		t.Error("not in work dir")
+	}
 }
 
 func TestOORange(t *testing.T) {
