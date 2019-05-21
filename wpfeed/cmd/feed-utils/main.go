@@ -57,7 +57,7 @@ func checkConfig(c io.Reader) string {
 		fmt.Fprintf(&report, "...checking %q\n", v.Name)
 		fmt.Fprintf(&report, "%s's number: %q\n", v.Name, v.Number)
 		fmt.Fprintf(&report, "%s's deadline: %q\n", v.Name, v.Deadline.Format(time.RFC1123))
-		fmt.Fprintf(&report, "%s's range: %d days\n", v.Name, v.Days)
+		fmt.Fprintf(&report, "%s's range: %+d days\n", v.Name, v.Days)
 		if v.Days > 0 {
 			fmt.Fprintf(&report, "%s's date range: %q to %q\n", v.Name, v.Deadline.Format(time.RFC1123), v.Deadline.AddDate(0, 0, v.Days).Format(time.RFC1123))
 		} else {
