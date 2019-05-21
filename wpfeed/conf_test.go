@@ -2,6 +2,10 @@ package wpfeed
 
 import "testing"
 
+func TestWorkDir(t *testing.T) {
+	c := Config{}
+}
+
 func TestOORange(t *testing.T) {
 	t1 := Tags{
 		{Priority: 1},
