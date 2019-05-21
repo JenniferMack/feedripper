@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -44,6 +46,14 @@ type (
 		URL  string `json:"url"`
 	}
 )
+
+func (c Config) IsWorkDir(d string, e error) bool {
+	if e != nil {
+		log.Printf("unable to resolve working directory %s", e)
+		return false
+	}
+	return filepath.Base(d) == filepath.Base(c.WorkDir)
+}
 
 // sort interface for Tags
 func (t Tags) Len() int           { return len(t) }
