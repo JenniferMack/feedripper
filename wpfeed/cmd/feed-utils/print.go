@@ -3,12 +3,13 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 
 	"golang.org/x/net/html"
 )
 
-func printHeadings(feed string) ([]byte, error) {
+func printHeadings(feed string) (io.Reader, error) {
 	in, err := os.Open(feed)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func printHeadings(feed string) ([]byte, error) {
 	in.Close()
 
 	parseHTML(doc, h)
-	return out.Bytes(), nil
+	return &out, nil
 }
 
 func parseHTML(n *html.Node, before func(n *html.Node)) {
