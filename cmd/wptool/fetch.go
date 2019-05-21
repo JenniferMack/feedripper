@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -33,6 +34,9 @@ func getFeeds(conf io.Reader, pretty bool) error {
 		wg := sync.WaitGroup{}
 
 		commChan := make(chan comm)
+		if v.IsWorkDir(os.Getwd()) {
+			v.WorkDir = "."
+		}
 
 		for _, f := range v.Feeds {
 			wg.Add(1)
