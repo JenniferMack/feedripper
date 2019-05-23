@@ -16,6 +16,8 @@ import (
 
 func regexDefault() []wphtml.RegexList {
 	re := []wphtml.RegexList{
+		{Pattern: "<img .+/core/emoji/.+ />",
+			Replace: ""},
 		{Pattern: `\[caption .+?\]`,
 			Replace: "<figure>\n"},
 		{Pattern: `> ?(.*)\[/caption\]`,
@@ -26,6 +28,8 @@ func regexDefault() []wphtml.RegexList {
 			Replace: `<a href="$1"><em>Video link</em></a>`},
 		{Pattern: `<iframe .*src="(.+?)".*?></iframe>`,
 			Replace: "\n" + `<a href="$1"><em>Video link</em></a>` + "\n"},
+		{Pattern: `(</?h)\d.*?(>)`,
+			Replace: `${1}3$2`},
 		{Pattern: ` `,
 			Replace: ` `}, // non-breaking space literal
 		{Pattern: `&nbsp;`,
@@ -38,8 +42,12 @@ func regexDefault() []wphtml.RegexList {
 			Replace: `"`},
 		{Pattern: `”`,
 			Replace: `"`},
-		{Pattern: `(</?h)\d.*?(>)`,
-			Replace: `${1}3$2`},
+		{Pattern: " ?(–|—) ?",
+			Replace: "—"},
+		{Pattern: " ?… ?",
+			Replace: "…"},
+		{Pattern: "–",
+			Replace: "—"},
 	}
 	return re
 }
