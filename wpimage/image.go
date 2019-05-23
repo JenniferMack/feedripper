@@ -18,12 +18,12 @@ import (
 )
 
 type ImageData struct {
-	rawpath string
-	path    string
-	host    string
-	valid   bool
-	resp    int
-	err     error
+	Rawpath string
+	Path    string
+	Host    string
+	Valid   bool
+	Resp    int
+	Err     error
 }
 
 func (i *ImageData) Parse(u string) error {
@@ -33,30 +33,30 @@ func (i *ImageData) Parse(u string) error {
 	}
 
 	if data.Host == "" {
-		data.Host = i.host
+		data.Host = i.Host
 	}
 	if data.Scheme == "http" || data.Scheme == "" {
 		data.Scheme = "https"
 	}
 
-	i.rawpath = u
+	i.Rawpath = u
 	data.RawQuery = ""
-	i.path = data.String()
+	i.Path = data.String()
 	return nil
 }
 
 func (i *ImageData) CheckImageStatus() error {
-	resp, err := http.Head(i.path)
+	resp, err := http.Head(i.Path)
 	if err != nil {
 		return err
 	}
 
 	sc := resp.StatusCode
 	if sc < 400 {
-		i.valid = true
+		i.Valid = true
 	}
-	i.resp = sc
-	i.err = err
+	i.Resp = sc
+	i.Err = err
 	return err
 }
 
