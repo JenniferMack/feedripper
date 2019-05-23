@@ -48,6 +48,7 @@ func (i *ImageData) Parse(u string) error {
 func (i *ImageData) CheckImageStatus() error {
 	resp, err := http.Head(i.Path)
 	if err != nil {
+		i.Err = err
 		return err
 	}
 
@@ -56,8 +57,7 @@ func (i *ImageData) CheckImageStatus() error {
 		i.Valid = true
 	}
 	i.Resp = sc
-	i.Err = err
-	return err
+	return nil
 }
 
 func fetchImageData(u string) ([]byte, error) {
