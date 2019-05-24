@@ -46,8 +46,8 @@ func (i *ImageList) Unmarshal(in io.Reader) error {
 	return json.NewDecoder(in).Decode(i)
 }
 
-func (i *ImageList) Merge(in ImageList) int {
-	mer := append(*i, in...)
+func (i ImageList) Merge(in ImageList) ImageList {
+	mer := append(i, in...)
 	tmp := make(map[string]ImageData)
 
 	for _, v := range mer {
@@ -64,8 +64,7 @@ func (i *ImageList) Merge(in ImageList) int {
 	for _, v := range tmp {
 		out = append(out, v)
 	}
-	*i = ImageList(out)
-	return len(*i)
+	return ImageList(out)
 }
 
 func (i *ImageList) FetchImages(d string) (int, error) {
