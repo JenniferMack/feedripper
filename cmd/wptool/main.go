@@ -23,7 +23,7 @@ var flagFeedHTML = feedCmd.Bool("html", false, "generate html output")
 
 var imageCmd = flag.NewFlagSet("image", flag.ExitOnError)
 var flagImageConfig = imageCmd.String("c", "config.json", "config file location")
-var flagImageFetch = imageCmd.Bool("-fetch", false, "fetch images")
+var flagImageFetch = imageCmd.Bool("fetch", false, "fetch images")
 
 func init() {
 	flag.Parse()
