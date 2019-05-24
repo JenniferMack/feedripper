@@ -23,6 +23,7 @@ var flagFeedHTML = feedCmd.Bool("html", false, "generate html output")
 
 var imageCmd = flag.NewFlagSet("image", flag.ExitOnError)
 var flagImageConfig = imageCmd.String("c", "config.json", "config file location")
+var flagImageFetch = imageCmd.Bool("-fetch", false, "fetch images")
 
 func init() {
 	flag.Parse()
@@ -74,7 +75,14 @@ func main() {
 	case "image":
 		imageCmd.Parse(os.Args[2:])
 		confFile := openFileR(*flagImageConfig, "image config")
-		errs(makeImageList(confFile), "image")
+		errs(makeImageList(confFile), "listng")
+
+		if *flagImageFetch {
+			// reset file pointer
+			_, err := confFile.Seek(0, io.SeekStart)
+			errs(err, "config seek")
+			errs(fetchImages(confFile), "fetching")
+		}
 		return
 
 	default:
