@@ -1,11 +1,51 @@
 package wpimage
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 )
+
+type ImageList []ImageData
+
+func (i *ImageList) Marshal(out io.Writer) error {
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	err := enc.Encode(i)
+	if err != nil {
+		return fmt.Errorf("json encode: %s", err)
+	}
+	return nil
+}
+
+func (i *ImageList) Unmarshal(in io.Reader) error {
+	return json.NewDecoder(in).Decode(i)
+}
+
+func (i *ImageList) Merge(in ImageList) int {
+	mer := append(*i, in...)
+	tmp := make(map[string]ImageData)
+
+	for _, v := range mer {
+		if _, ok := tmp[v.Rawpath]; ok {
+			if v.Valid || v.Path != "" {
+				tmp[v.Rawpath] = v
+				continue
+			}
+		}
+		tmp[v.Rawpath] = v
+	}
+
+	// reset
+	i = new(ImageList)
+	for _, v := range tmp {
+		*i = append(*i, v)
+	}
+	return len(*i)
+}
 
 type ImageData struct {
 	Rawpath string
@@ -16,7 +56,7 @@ type ImageData struct {
 	Err     error
 }
 
-func (i *ImageData) Parse(u string) error {
+func (i *ImageData) ParseImageURL(u string) error {
 	data, err := url.Parse(u)
 	if err != nil {
 		return fmt.Errorf("url parse: %s", err)
