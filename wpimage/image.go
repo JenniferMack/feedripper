@@ -53,7 +53,7 @@ type ImageData struct {
 	Host    string
 	Valid   bool
 	Resp    int
-	Err     error
+	Err     string
 }
 
 func (i *ImageData) ParseImageURL(u string) error {
@@ -86,7 +86,7 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 
 	resp, err := http.Head(i.Path)
 	if err != nil {
-		i.Err = err
+		i.Err = err.Error()
 		return 0, fmt.Errorf("http head: %s", err)
 	}
 
