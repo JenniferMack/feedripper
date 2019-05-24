@@ -21,6 +21,9 @@ var flagFeedMerge = feedCmd.Bool("merge", false, "merge the feeds")
 var flagFeedFormat = feedCmd.Bool("pp", false, "pretty print feeds")
 var flagFeedHTML = feedCmd.Bool("html", false, "generate html output")
 
+var imageCmd = flag.NewFlagSet("image", flag.ExitOnError)
+var flagImageConfig = imageCmd.String("c", "config.json", "config file location")
+
 func init() {
 	flag.Parse()
 }
@@ -66,6 +69,12 @@ func main() {
 			errs(err, "config seek")
 			errs(outputHTMLByTags(confFile, nil, os.Stdout), "html")
 		}
+		return
+
+	case "image":
+		imageCmd.Parse(os.Args[2:])
+		confFile := openFileR(*flagImageConfig, "image config")
+		errs(makeImageList(confFile), "image")
 		return
 
 	default:
