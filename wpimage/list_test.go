@@ -12,7 +12,16 @@ func TestList(t *testing.T) {
 	if e != nil {
 		t.Error(e)
 	}
-	if len(x) != 2 {
-		t.Error(x)
-	}
+
+	t.Run("content", func(t *testing.T) {
+		if x[0].Rawpath != "foo.jpg" {
+			t.Error(x[0])
+		}
+	})
+
+	t.Run("len", func(t *testing.T) {
+		if len(x) != 2 {
+			t.Error(x)
+		}
+	})
 }
