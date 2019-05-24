@@ -7,9 +7,30 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path/filepath"
 )
 
 type ImageList []ImageData
+
+func (i ImageList) SavedNum() int {
+	n := 0
+	for _, v := range i {
+		if v.Saved {
+			n += 1
+		}
+	}
+	return n
+}
+
+func (i ImageList) ValidNum() int {
+	n := 0
+	for _, v := range i {
+		if v.Valid {
+			n += 1
+		}
+	}
+	return n
+}
 
 func (i *ImageList) Marshal(out io.Writer) error {
 	enc := json.NewEncoder(out)
@@ -47,13 +68,44 @@ func (i *ImageList) Merge(in ImageList) int {
 	return len(*i)
 }
 
+func (i *ImageList) FetchImages(d string) (int, error) {
+	num := 0
+	list := []ImageData{}
+	for _, v := range *i {
+		n, err := v.fetchImage(d)
+		if err != nil {
+			v.Err = err.Error()
+		}
+		list = append(list, v)
+		num += n
+	}
+	*i = ImageList(list)
+	return num, nil
+}
+
 type ImageData struct {
-	Rawpath string
-	Path    string
-	Host    string
-	Valid   bool
-	Resp    int
-	Err     string
+	Rawpath   string
+	Path      string
+	LocalPath string
+	Host      string
+	Valid     bool
+	Saved     bool
+	Resp      int
+	Err       string
+}
+
+func (i *ImageData) fetchImage(d string) (int, error) {
+	if !i.Valid {
+		i.LocalPath = filepath.Join(d, "404.jpg")
+		return 0, nil
+	}
+	if i.Saved {
+		return 0, nil
+	}
+	// do downlaod
+	i.Saved = true
+	i.LocalPath = filepath.Join(d, filepath.Base(i.Path))
+	return 1, nil
 }
 
 func (i *ImageData) ParseImageURL(u string) error {
