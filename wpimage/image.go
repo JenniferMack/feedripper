@@ -39,11 +39,11 @@ func (i *ImageList) Merge(in ImageList) int {
 		tmp[v.Rawpath] = v
 	}
 
-	// reset
-	i = new(ImageList)
+	out := []ImageData{}
 	for _, v := range tmp {
-		*i = append(*i, v)
+		out = append(out, v)
 	}
+	*i = ImageList(out)
 	return len(*i)
 }
 
@@ -57,6 +57,10 @@ type ImageData struct {
 }
 
 func (i *ImageData) ParseImageURL(u string) error {
+	if i.Resp != 0 || i.Valid {
+		return nil
+	}
+
 	data, err := url.Parse(u)
 	if err != nil {
 		return fmt.Errorf("url parse: %s", err)
@@ -75,11 +79,15 @@ func (i *ImageData) ParseImageURL(u string) error {
 	return nil
 }
 
-func (i *ImageData) CheckImageStatus() error {
+func (i *ImageData) CheckImageStatus() (int, error) {
+	if i.Resp != 0 || i.Valid {
+		return 0, nil
+	}
+
 	resp, err := http.Head(i.Path)
 	if err != nil {
 		i.Err = err
-		return err
+		return 0, fmt.Errorf("http head: %s", err)
 	}
 
 	sc := resp.StatusCode
@@ -87,7 +95,7 @@ func (i *ImageData) CheckImageStatus() error {
 		i.Valid = true
 	}
 	i.Resp = sc
-	return nil
+	return 1, nil
 }
 
 func fetchImageData(u string) ([]byte, error) {
