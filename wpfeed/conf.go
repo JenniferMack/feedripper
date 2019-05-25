@@ -22,6 +22,10 @@ type (
 		WorkDir   string    `json:"work_dir"`
 		JSONDir   string    `json:"json_dir"`
 		RSSDir    string    `json:"rss_dir"`
+		ImageDir  string    `json:"image_dir"`
+		UseTLS    bool      `json:"use_tls"`
+		ImgQual   int       `json:"img_qual"`
+		ImgWidth  uint      `json:"img_width"`
 		Language  string    `json:"language"`
 		SiteURL   string    `json:"site_url"`
 		Separator string    `json:"separator"`
@@ -46,6 +50,30 @@ type (
 		URL  string `json:"url"`
 	}
 )
+
+func (c Config) Paths(d string, e error) (map[string]string, error) {
+	if e != nil {
+		return nil, fmt.Errorf("unable to resolve working directory %s", e)
+	}
+
+	if c.isWorkDir(d) {
+		c.WorkDir = "."
+	}
+
+	name := fmt.Sprintf("%s-%s", c.Name, c.Number)
+	paths := make(map[string]string)
+	paths["json"] = filepath.Join(c.WorkDir, name+".json")
+	paths["images"] = filepath.Join(c.WorkDir, name+"-images.json")
+	paths["html"] = filepath.Join(c.WorkDir, name+".html")
+	paths["jsonDir"] = filepath.Join(c.WorkDir, c.JSONDir)
+	paths["rssDir"] = filepath.Join(c.WorkDir, c.RSSDir)
+	paths["imageDir"] = filepath.Join(c.WorkDir, c.ImageDir)
+	return paths, nil
+}
+
+func (c Config) isWorkDir(d string) bool {
+	return filepath.Base(d) == filepath.Base(c.WorkDir)
+}
 
 func (c Config) IsWorkDir(d string, e error) bool {
 	if e != nil {
