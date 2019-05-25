@@ -33,20 +33,6 @@ func images(c io.Reader, a []string) error {
 	return nil
 }
 
-func readExistingFile(p string) (wpimage.ImageList, error) {
-	b, err := ioutil.ReadFile(p)
-	if err != nil {
-		b = []byte("[]")
-	}
-
-	list := wpimage.ImageList{}
-	err = list.Unmarshal(bytes.NewBuffer(b))
-	if err != nil {
-		return nil, err
-	}
-	return list, nil
-}
-
 func doAction(a string, c wpfeed.Config) error {
 	paths, err := c.Paths(os.Getwd())
 	if err != nil {
@@ -56,61 +42,50 @@ func doAction(a string, c wpfeed.Config) error {
 	if err != nil {
 		return err
 	}
+	// load early incase of changes
+	list.SetDefaults(c.ImageQual, c.ImageWidth, c.UseTLS)
 
+	var out []byte
+	var e error
 	switch a {
 	case "parse":
-		l, err := doParse(list, paths["images"], paths["html"])
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(paths["images"], l, 0644)
+		out, e = doParse(list, paths["images"], paths["html"])
 
 	case "filter":
-		l, err := doFilter(list, paths["images"], c.SiteURL)
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(paths["images"], l, 0644)
+		out, e = doFilter(list, paths["images"], c.SiteURL)
 
 	case "verify":
-		l, err := doVerify(list, paths["images"])
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(paths["images"], l, 0644)
+		out, e = doVerify(list, paths["images"])
 
 	case "fetch":
-		l, err := doFetch(list, paths["images"], paths["imageDir"])
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(paths["images"], l, 0644)
+		out, e = doFetch(list, paths["images"], paths["imageDir"])
 	}
-	return nil
+
+	if e != nil {
+		return err
+	}
+	return ioutil.WriteFile(paths["images"], out, 0644)
 }
 
 func doFetch(list wpimage.ImageList, path, dir string) ([]byte, error) {
 	log.Printf("> fetching images [%s]", path)
 
-	type retChan struct {
+	type carrier struct {
 		item  wpimage.ImageData
 		image []byte
 		err   error
 	}
 	wg := sync.WaitGroup{}
-	ch := make(chan retChan)
-	token := make(chan struct{}, 10)
+	ch := make(chan carrier, 10)
 
 	for _, v := range list {
 		wg.Add(1)
 		go func(i wpimage.ImageData) {
 			defer wg.Done()
-			token <- struct{}{}
 
 			b, err := i.FetchImage(dir)
-			out := retChan{item: i, image: b, err: err}
+			out := carrier{item: i, image: b, err: err}
 			ch <- out
-			<-token
 		}(v)
 	}
 	go func() {
@@ -119,65 +94,56 @@ func doFetch(list wpimage.ImageList, path, dir string) ([]byte, error) {
 	}()
 
 	o := []wpimage.ImageData{}
+	got := 0
 	for v := range ch {
-		o = append(o, v.item)
 		if v.err != nil {
 			log.Printf("[error] fetching: %s", v.err)
+			continue
+		}
+		if v.image != nil {
+			got++
 		}
 
-		if v.image == nil {
+		err := saveImage(v.image, v.item.LocalPath, v.item.ImgWidth, v.item.ImgQual)
+		if err != nil {
+			log.Printf("[error] saving: %s", v.err)
 			continue
 		}
-		j, err := wpimage.MakeJPEG(v.image, 40, 250)
-		if err != nil {
-			log.Printf("[error] jpeg %s: %s", v.item.LocalPath, v.err)
-			continue
-		}
-		err = ioutil.WriteFile(v.item.LocalPath, j, 0644)
-		log.Printf("[%s|%s] saved", size(len(j)), v.item.LocalPath)
-		if err != nil {
-			log.Printf("[error] saving %s: %s", v.item.LocalPath, v.err)
-		}
+
+		v.item.Saved = true
+		o = append(o, v.item)
 	}
 	out := wpimage.ImageList(o)
 
-	log.Printf("%d images saved, %d skipped",
-		out.SavedNum(), len(out)-out.SavedNum())
+	log.Printf("%d/%d downloaded, %d skipped", got, out.SavedNum(), out.SavedNum()-got)
 
 	buf := bytes.Buffer{}
-	err := out.Marshal(&buf)
-	if err != nil {
+	if err := out.Marshal(&buf); err != nil {
 		return nil, err
 	}
 
 	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), path)
 	return buf.Bytes(), nil
-
-	return nil, nil
 }
 
 func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 	log.Printf("> verifying image URLs [%s]", path)
 
-	type retChan struct {
-		num  int
+	type carrier struct {
 		err  error
 		item wpimage.ImageData
 	}
 	wg := sync.WaitGroup{}
-	ch := make(chan retChan)
-	token := make(chan struct{}, 10)
+	ch := make(chan carrier, 10)
 
 	for _, v := range list {
 		wg.Add(1)
 		go func(i wpimage.ImageData) {
 			defer wg.Done()
-			token <- struct{}{}
 
-			n, err := i.CheckImageStatus()
-			re := retChan{num: n, err: err, item: i}
+			_, err := i.CheckImageStatus()
+			re := carrier{item: i, err: err}
 			ch <- re
-			<-token
 		}(v)
 	}
 	go func() {
@@ -190,8 +156,8 @@ func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 	for v := range ch {
 		if v.err != nil {
 			log.Printf("[error] %s", v.err)
+			n++
 		}
-		n += v.num
 		o = append(o, v.item)
 	}
 	out := wpimage.ImageList(o)
@@ -200,8 +166,7 @@ func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 		len(out), out.ValidNum(), len(out)-out.ValidNum(), n)
 
 	buf := bytes.Buffer{}
-	err := out.Marshal(&buf)
-	if err != nil {
+	if err := out.Marshal(&buf); err != nil {
 		return nil, err
 	}
 
@@ -228,8 +193,7 @@ func doParse(list wpimage.ImageList, imgPath, htmlPath string) ([]byte, error) {
 	log.Printf("%-3d images found in %s", len(list), imgPath)
 
 	buf := bytes.Buffer{}
-	err = merged.Marshal(&buf)
-	if err != nil {
+	if err := merged.Marshal(&buf); err != nil {
 		return nil, err
 	}
 
@@ -243,15 +207,47 @@ func doFilter(list wpimage.ImageList, path, u string) ([]byte, error) {
 
 	n := 0
 	for k := range list {
-		n += list[k].ParseImageURL(u, false)
+		n += list[k].ParseImageURL(u)
 	}
 	log.Printf("%d vaild URLs, %d errors", n, len(list)-n)
 
 	buf := bytes.Buffer{}
-	err := list.Marshal(&buf)
+	if err := list.Marshal(&buf); err != nil {
+		return nil, err
+	}
+
+	log.Printf("> [%s/%d] %s", size(buf.Len()), len(list), path)
+	return buf.Bytes(), nil
+}
+
+func readExistingFile(p string) (wpimage.ImageList, error) {
+	b, err := ioutil.ReadFile(p)
+	if err != nil {
+		b = []byte("[]")
+	}
+
+	list := wpimage.ImageList{}
+	err = list.Unmarshal(bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("> [%s/%d] %s", size(buf.Len()), len(list), path)
-	return buf.Bytes(), nil
+	return list, nil
+}
+
+func saveImage(in []byte, p string, w uint, q int) error {
+	if in == nil {
+		return nil
+	}
+	j, err := wpimage.MakeJPEG(in, q, w)
+	if err != nil {
+		return fmt.Errorf("jpeg %s: %s", p, err)
+	}
+	err = ioutil.WriteFile(p, j, 0644)
+	if err != nil {
+		return fmt.Errorf("disk %s: %s", p, err)
+	}
+	if *flagImageVerbose {
+		log.Printf("[%s|%s]", size(len(j)), p)
+	}
+	return nil
 }

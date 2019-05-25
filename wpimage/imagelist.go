@@ -8,10 +8,11 @@ import (
 
 type ImageList []ImageData
 
-func (i ImageList) ImgInfo(q int, w uint) {
+func (i ImageList) SetDefaults(q int, w uint, tls bool) {
 	for k := range i {
 		i[k].ImgQual = q
 		i[k].ImgWidth = w
+		i[k].UseTLS = tls
 	}
 }
 
@@ -45,7 +46,7 @@ func (i ImageList) Marshal(out io.Writer) error {
 	return nil
 }
 
-func (i ImageList) Unmarshal(in io.Reader) error {
+func (i *ImageList) Unmarshal(in io.Reader) error {
 	return json.NewDecoder(in).Decode(i)
 }
 

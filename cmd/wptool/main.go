@@ -10,20 +10,26 @@ import (
 
 const nameFmt = `%s-%s.%s`
 
-var version string
-var flagVers = flag.Bool("v", false, "print version number")
-var flagRegex = flag.Bool("D", false, "print default regex patterns (json)")
+var (
+	version   string
+	flagVers  = flag.Bool("v", false, "print version number")
+	flagRegex = flag.Bool("D", false, "print default regex patterns (json)")
 
-var feedCmd = flag.NewFlagSet("feed", flag.ExitOnError)
-var flagFeedConfig = feedCmd.String("c", "config.json", "config file location")
-var flagFeedFetch = feedCmd.Bool("fetch", false, "retrieve the feeds")
-var flagFeedMerge = feedCmd.Bool("merge", false, "merge the feeds")
-var flagFeedFormat = feedCmd.Bool("pp", false, "pretty print feeds")
-var flagFeedHTML = feedCmd.Bool("html", false, "generate html output")
+	feedCmd        = flag.NewFlagSet("feed", flag.ExitOnError)
+	flagFeedConfig = feedCmd.String("c", "config.json", "config file location")
+	flagFeedFetch  = feedCmd.Bool("fetch", false, "retrieve the feeds")
+	flagFeedMerge  = feedCmd.Bool("merge", false, "merge the feeds")
+	flagFeedFormat = feedCmd.Bool("pp", false, "pretty print feeds")
+	flagFeedHTML   = feedCmd.Bool("html", false, "generate html output")
 
-var imageCmd = flag.NewFlagSet("image", flag.ExitOnError)
-var flagImageConfig = imageCmd.String("c", "config.json", "config file location")
-var flagImageFetch = imageCmd.Bool("fetch", false, "fetch images")
+	imageCmd         = flag.NewFlagSet("image", flag.ExitOnError)
+	flagImageConfig  = imageCmd.String("c", "config.json", "config file location")
+	flagImageParse   = imageCmd.Bool("parse", false, "parse HTML for images")
+	flagImageFilter  = imageCmd.Bool("filter", false, "filter image URLs")
+	flagImageVerify  = imageCmd.Bool("verify", false, "verify images are downloadable")
+	flagImageFetch   = imageCmd.Bool("fetch", false, "fetch images")
+	flagImageVerbose = imageCmd.Bool("v", false, "prints status of each download")
+)
 
 func init() {
 	flag.Parse()
@@ -76,15 +82,20 @@ func main() {
 		imageCmd.Parse(os.Args[2:])
 		confFile := openFileR(*flagImageConfig, "image config")
 
-		errs(images(confFile, []string{"parse", "filter", "verify", "fetch"}), "image")
-		// errs(makeImageList(confFile), "listng")
-		//
-		// if *flagImageFetch {
-		// 	// reset file pointer
-		// 	_, err := confFile.Seek(0, io.SeekStart)
-		// 	errs(err, "config seek")
-		// 	errs(fetchImages(confFile), "fetching")
-		// }
+		actions := []string{}
+		if *flagImageParse {
+			actions = append(actions, "parse")
+		}
+		if *flagImageFilter {
+			actions = append(actions, "filter")
+		}
+		if *flagImageVerify {
+			actions = append(actions, "verify")
+		}
+		if *flagImageFetch {
+			actions = append(actions, "fetch")
+		}
+		errs(images(confFile, actions), "image")
 		return
 
 	default:

@@ -10,19 +10,20 @@ import (
 )
 
 type ImageData struct {
-	Rawpath   string
-	Path      string
-	LocalPath string
-	Host      string
-	Valid     bool
-	Saved     bool
-	ImgQual   int
-	ImgWidth  uint
-	Resp      int
-	Err       string
+	Rawpath   string `json:"rawpath"`
+	Path      string `json:"path"`
+	LocalPath string `json:"local_path"`
+	Host      string `json:"host"`
+	Valid     bool   `json:"valid"`
+	Saved     bool   `json:"saved"`
+	ImgQual   int    `json:"img_qual"`
+	ImgWidth  uint   `json:"img_width"`
+	UseTLS    bool   `json:"use_tls"`
+	Resp      int    `json:"resp"`
+	Err       string `json:"err"`
 }
 
-func (i *ImageData) ParseImageURL(h string, tls bool) int {
+func (i *ImageData) ParseImageURL(h string) int {
 	if i.Resp != 0 || i.Valid {
 		return 1
 	}
@@ -39,7 +40,7 @@ func (i *ImageData) ParseImageURL(h string, tls bool) int {
 	if data.Scheme == "" {
 		data.Scheme = "http"
 	}
-	if tls && data.Scheme == "http" {
+	if i.UseTLS && data.Scheme == "http" {
 		data.Scheme = "https"
 	}
 
