@@ -59,6 +59,9 @@ func doAction(a string, c wpfeed.Config) error {
 
 	case "fetch":
 		out, e = doFetch(list, paths["images"], paths["imageDir"], wr)
+
+	case "update":
+		out, e = doUpdate(list, paths["images"], paths["html"], wr)
 	}
 
 	if e != nil {
