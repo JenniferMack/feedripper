@@ -44,7 +44,7 @@ func fetchImages(c io.Reader) error {
 		va := img.ValidNum()
 
 		log.Printf("%d images loaded from %s", le, path)
-		log.Printf("%d/%d images already saved", va, sa)
+		log.Printf("%d/%d images already saved", sa, va)
 		log.Printf("%d images to download", va-sa)
 
 		if va-sa == 0 {

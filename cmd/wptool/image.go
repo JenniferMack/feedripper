@@ -58,18 +58,18 @@ func makeImageList(c io.Reader) error {
 		log.Printf("%d unique images to check", len(img))
 
 		nimg, nerr := 0, 0
-		for k := range img {
-			e := img[k].ParseImageURL(img[k].Rawpath)
-			if e != nil {
-				log.Printf("[parse error] %s", e)
-			}
-			i, e := img[k].CheckImageStatus()
-			nimg += i
-			if e != nil {
-				nerr += 1
-				log.Printf("[URL error] %s", e)
-			}
-		}
+		// for k := range img {
+		// 	e := img[k].ParseImageURL("")
+		// 	if e != nil {
+		// 		log.Printf("[parse error] %s", e)
+		// 	}
+		// 	i, e := img[k].CheckImageStatus()
+		// 	nimg += i
+		// 	if e != nil {
+		// 		nerr += 1
+		// 		log.Printf("[URL error] %s", e)
+		// 	}
+		// }
 
 		buf := bytes.Buffer{}
 		err = img.Marshal(&buf)

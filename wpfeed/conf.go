@@ -15,19 +15,23 @@ import (
 type (
 	// Config holds the information for saving WordPress feeds.
 	Config struct {
-		Name      string    `json:"name"`
-		Number    string    `json:"number"`
-		Deadline  time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
-		Days      int       `json:"days"`
-		WorkDir   string    `json:"work_dir"`
-		JSONDir   string    `json:"json_dir"`
-		RSSDir    string    `json:"rss_dir"`
-		Language  string    `json:"language"`
-		SiteURL   string    `json:"site_url"`
-		Separator string    `json:"separator"`
-		Tags      Tags      `json:"tags"`
-		Exclude   []string  `json:"exclude"`
-		Feeds     []Feed    `json:"feeds"`
+		Name       string    `json:"name"`
+		Number     string    `json:"number"`
+		Deadline   time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
+		Days       int       `json:"days"`
+		WorkDir    string    `json:"work_dir"`
+		JSONDir    string    `json:"json_dir"`
+		RSSDir     string    `json:"rss_dir"`
+		ImageDir   string    `json:"image_dir"`
+		UseTLS     bool      `json:"use_tls"`
+		ImageQual  int       `json:"image_qual"`
+		ImageWidth uint      `json:"image_width"`
+		Language   string    `json:"language"`
+		SiteURL    string    `json:"site_url"`
+		Separator  string    `json:"separator"`
+		Tags       Tags      `json:"tags"`
+		Exclude    []string  `json:"exclude"`
+		Feeds      []Feed    `json:"feeds"`
 	}
 
 	Tags []Tag
@@ -46,6 +50,30 @@ type (
 		URL  string `json:"url"`
 	}
 )
+
+func (c Config) Paths(d string, e error) (map[string]string, error) {
+	if e != nil {
+		return nil, fmt.Errorf("unable to resolve working directory %s", e)
+	}
+
+	if c.isWorkDir(d) {
+		c.WorkDir = "."
+	}
+
+	name := fmt.Sprintf("%s-%s", c.Name, c.Number)
+	paths := make(map[string]string)
+	paths["json"] = filepath.Join(c.WorkDir, name+".json")
+	paths["images"] = filepath.Join(c.WorkDir, name+"-images.json")
+	paths["html"] = filepath.Join(c.WorkDir, name+".html")
+	paths["jsonDir"] = filepath.Join(c.WorkDir, c.JSONDir)
+	paths["rssDir"] = filepath.Join(c.WorkDir, c.RSSDir)
+	paths["imageDir"] = filepath.Join(c.WorkDir, c.ImageDir)
+	return paths, nil
+}
+
+func (c Config) isWorkDir(d string) bool {
+	return filepath.Base(d) == filepath.Base(c.WorkDir)
+}
 
 func (c Config) IsWorkDir(d string, e error) bool {
 	if e != nil {
