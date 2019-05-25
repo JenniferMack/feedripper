@@ -60,12 +60,12 @@ func TestDoFetchImg(t *testing.T) {
 		}
 	})
 	t.Run("errors", func(t *testing.T) {
-		if !bytes.Contains(buf.Bytes(), []byte("1 errors")) {
+		if !bytes.Contains(buf.Bytes(), []byte("1 error,")) {
 			t.Error(buf.String())
 		}
 	})
 	t.Run("skipped", func(t *testing.T) {
-		if !bytes.Contains(buf.Bytes(), []byte("1 skipped")) {
+		if !bytes.Contains(buf.Bytes(), []byte("1/2 downloaded, 1 error, 1 prev. saved")) {
 			t.Error(buf.String())
 		}
 	})

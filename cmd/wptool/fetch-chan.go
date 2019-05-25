@@ -120,7 +120,11 @@ func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, er
 	}
 	out := wpimage.ImageList(o)
 
-	log.Printf("%d/%d downloaded, %d skipped, %d errors", got, len(out), len(out)-got, errs)
+	suffix := "s"
+	if errs == 1 {
+		suffix = ""
+	}
+	log.Printf("%d/%d downloaded, %d error%s, %d prev. saved", got, len(out), errs, suffix, len(out)-got)
 
 	buf := bytes.Buffer{}
 	if err := out.Marshal(&buf); err != nil {
