@@ -1,87 +1,13 @@
 package wpimage
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
 )
-
-type ImageList []ImageData
-
-func (i ImageList) SavedNum() int {
-	n := 0
-	for _, v := range i {
-		if v.Saved {
-			n += 1
-		}
-	}
-	return n
-}
-
-func (i ImageList) ValidNum() int {
-	n := 0
-	for _, v := range i {
-		if v.Valid {
-			n += 1
-		}
-	}
-	return n
-}
-
-func (i *ImageList) Marshal(out io.Writer) error {
-	enc := json.NewEncoder(out)
-	enc.SetIndent("", "  ")
-	err := enc.Encode(i)
-	if err != nil {
-		return fmt.Errorf("json encode: %s", err)
-	}
-	return nil
-}
-
-func (i *ImageList) Unmarshal(in io.Reader) error {
-	return json.NewDecoder(in).Decode(i)
-}
-
-func (i ImageList) Merge(in ImageList) ImageList {
-	mer := append(i, in...)
-	tmp := make(map[string]ImageData)
-
-	for _, v := range mer {
-		if _, ok := tmp[v.Rawpath]; ok {
-			if v.Valid || v.Path != "" {
-				tmp[v.Rawpath] = v
-				continue
-			}
-		}
-		tmp[v.Rawpath] = v
-	}
-
-	out := []ImageData{}
-	for _, v := range tmp {
-		out = append(out, v)
-	}
-	return ImageList(out)
-}
-
-func (i *ImageList) FetchImages(d string) (int, error) {
-	// 	num := 0
-	// 	list := []ImageData{}
-	// 	for _, v := range *i {
-	// 		n, err := v.fetchImage(d)
-	// 		if err != nil {
-	// 			v.Err = err.Error()
-	// 		}
-	// 		list = append(list, v)
-	// 		num += n
-	// 	}
-	// 	*i = ImageList(list)
-	return 0, nil
-}
 
 type ImageData struct {
 	Rawpath   string
@@ -90,6 +16,8 @@ type ImageData struct {
 	Host      string
 	Valid     bool
 	Saved     bool
+	ImgQual   int
+	ImgWidth  uint
 	Resp      int
 	Err       string
 }
@@ -170,7 +98,6 @@ func (i *ImageData) FetchImage(d string) ([]byte, error) {
 		return nil, err
 	}
 
-	i.Saved = true
 	p := filepath.Base(i.Path)
 	e := filepath.Ext(p)
 	p = strings.TrimSuffix(p, e) + ".jpg"
