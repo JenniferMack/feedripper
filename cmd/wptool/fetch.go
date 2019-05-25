@@ -30,7 +30,7 @@ func getFeeds(conf io.Reader, pretty bool) error {
 	}
 
 	for _, v := range c {
-		log.Printf("> Fetching %s #%s...", v.Name, v.Number)
+		log.Printf("> %s, fetching %s #%s...", time.Now().Format("Jan 02, 15:04"), v.Name, v.Number)
 		wg := sync.WaitGroup{}
 
 		commChan := make(chan comm)
