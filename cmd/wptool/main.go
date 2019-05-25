@@ -75,14 +75,16 @@ func main() {
 	case "image":
 		imageCmd.Parse(os.Args[2:])
 		confFile := openFileR(*flagImageConfig, "image config")
-		errs(makeImageList(confFile), "listng")
 
-		if *flagImageFetch {
-			// reset file pointer
-			_, err := confFile.Seek(0, io.SeekStart)
-			errs(err, "config seek")
-			errs(fetchImages(confFile), "fetching")
-		}
+		errs(images(confFile, []string{"parse", "filter", "verify", "fetch"}), "image")
+		// errs(makeImageList(confFile), "listng")
+		//
+		// if *flagImageFetch {
+		// 	// reset file pointer
+		// 	_, err := confFile.Seek(0, io.SeekStart)
+		// 	errs(err, "config seek")
+		// 	errs(fetchImages(confFile), "fetching")
+		// }
 		return
 
 	default:

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 )
 
 type ImageList []ImageData
@@ -68,18 +69,18 @@ func (i ImageList) Merge(in ImageList) ImageList {
 }
 
 func (i *ImageList) FetchImages(d string) (int, error) {
-	num := 0
-	list := []ImageData{}
-	for _, v := range *i {
-		n, err := v.fetchImage(d)
-		if err != nil {
-			v.Err = err.Error()
-		}
-		list = append(list, v)
-		num += n
-	}
-	*i = ImageList(list)
-	return num, nil
+	// 	num := 0
+	// 	list := []ImageData{}
+	// 	for _, v := range *i {
+	// 		n, err := v.fetchImage(d)
+	// 		if err != nil {
+	// 			v.Err = err.Error()
+	// 		}
+	// 		list = append(list, v)
+	// 		num += n
+	// 	}
+	// 	*i = ImageList(list)
+	return 0, nil
 }
 
 type ImageData struct {
@@ -93,60 +94,52 @@ type ImageData struct {
 	Err       string
 }
 
-func (i *ImageData) fetchImage(d string) (int, error) {
-	if !i.Valid {
-		i.LocalPath = filepath.Join(d, "404.jpg")
-		return 0, nil
-	}
-	if i.Saved {
-		return 0, nil
-	}
-	// do downlaod
-	i.Saved = true
-	i.LocalPath = filepath.Join(d, filepath.Base(i.Path))
-	return 1, nil
-}
-
-func (i *ImageData) ParseImageURL(u string) error {
+func (i *ImageData) ParseImageURL(h string, tls bool) int {
 	if i.Resp != 0 || i.Valid {
-		return nil
+		return 1
 	}
 
-	data, err := url.Parse(u)
+	data, err := url.Parse(i.Rawpath)
 	if err != nil {
-		return fmt.Errorf("url parse: %s", err)
+		i.Err = err.Error()
+		return 0
 	}
 
 	if data.Host == "" {
-		data.Host = i.Host
+		data.Host = h
 	}
-	if data.Scheme == "http" || data.Scheme == "" {
+	if data.Scheme == "" {
+		data.Scheme = "http"
+	}
+	if tls && data.Scheme == "http" {
 		data.Scheme = "https"
 	}
 
-	i.Rawpath = u
 	data.RawQuery = ""
 	i.Path = data.String()
-	return nil
+	return 1
 }
 
 func (i *ImageData) CheckImageStatus() (int, error) {
 	if i.Resp != 0 || i.Valid {
+		i.Err = ""
 		return 0, nil
 	}
 
 	resp, err := http.Head(i.Path)
 	if err != nil {
 		i.Err = err.Error()
-		return 0, fmt.Errorf("http head: %s", err)
+		return 1, fmt.Errorf("http head: %s", err)
 	}
+	defer resp.Body.Close()
 
 	sc := resp.StatusCode
 	if sc < 400 {
 		i.Valid = true
 	}
 	i.Resp = sc
-	return 1, nil
+	i.Err = ""
+	return 0, nil
 }
 
 func fetchImageData(u string) ([]byte, error) {
@@ -161,4 +154,26 @@ func fetchImageData(u string) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func (i *ImageData) FetchImage(d string) ([]byte, error) {
+	if !i.Valid {
+		i.LocalPath = filepath.Join(d, "404.jpg")
+		return nil, nil
+	}
+	if i.Saved {
+		return nil, nil
+	}
+	// do downlaod
+	b, err := fetchImageData(i.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	i.Saved = true
+	p := filepath.Base(i.Path)
+	e := filepath.Ext(p)
+	p = strings.TrimSuffix(p, e) + ".jpg"
+	i.LocalPath = filepath.Join(d, p)
+	return b, nil
 }

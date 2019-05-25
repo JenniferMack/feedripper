@@ -15,7 +15,7 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-func makeJPEG(d []byte, q int, w uint) (b []byte, e error) {
+func MakeJPEG(d []byte, q int, w uint) (b []byte, e error) {
 	defer func() {
 		if r := recover(); r != nil {
 			b, e = nil, fmt.Errorf("jpg panic: %v", r)
