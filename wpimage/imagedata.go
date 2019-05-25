@@ -71,18 +71,18 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 	return 0, nil
 }
 
-func fetchImageData(u string) ([]byte, error) {
+func fetchImageData(u string) ([]byte, int, error) {
 	resp, err := http.Get(u)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return data, nil
+	return data, resp.StatusCode, nil
 }
 
 func (i *ImageData) FetchImage(d string) ([]byte, error) {
@@ -94,9 +94,15 @@ func (i *ImageData) FetchImage(d string) ([]byte, error) {
 		return nil, nil
 	}
 	// do downlaod
-	b, err := fetchImageData(i.Path)
+	b, c, err := fetchImageData(i.Path)
 	if err != nil {
 		return nil, err
+	}
+
+	if c != 200 {
+		i.LocalPath = filepath.Join(d, "404.jpg")
+		i.Resp = c
+		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
 	}
 
 	p := filepath.Base(i.Path)

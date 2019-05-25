@@ -47,6 +47,7 @@ func doAction(a string, c wpfeed.Config) error {
 
 	var out []byte
 	var e error
+	wr := os.Stderr
 	switch a {
 	case "parse":
 		out, e = doParse(list, paths["images"], paths["html"])
@@ -58,7 +59,7 @@ func doAction(a string, c wpfeed.Config) error {
 		out, e = doVerify(list, paths["images"])
 
 	case "fetch":
-		out, e = doFetch(list, paths["images"], paths["imageDir"])
+		out, e = doFetch(list, paths["images"], paths["imageDir"], wr)
 	}
 
 	if e != nil {
@@ -67,8 +68,9 @@ func doAction(a string, c wpfeed.Config) error {
 	return ioutil.WriteFile(paths["images"], out, 0644)
 }
 
-func doFetch(list wpimage.ImageList, path, dir string) ([]byte, error) {
+func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, error) {
 	log.Printf("> fetching images [%s]", path)
+	log.SetOutput(wr)
 
 	type carrier struct {
 		item  wpimage.ImageData
@@ -94,11 +96,14 @@ func doFetch(list wpimage.ImageList, path, dir string) ([]byte, error) {
 	}()
 
 	o := []wpimage.ImageData{}
-	got := 0
+	var got, errs int
 	for v := range ch {
+		v.item.Saved = true
+
 		if v.err != nil {
 			log.Printf("[error] fetching: %s", v.err)
-			continue
+			v.item.Saved = false
+			errs++
 		}
 		if v.image != nil {
 			got++
@@ -106,16 +111,16 @@ func doFetch(list wpimage.ImageList, path, dir string) ([]byte, error) {
 
 		err := saveImage(v.image, v.item.LocalPath, v.item.ImgWidth, v.item.ImgQual)
 		if err != nil {
-			log.Printf("[error] saving: %s", v.err)
-			continue
+			log.Printf("[error] saving: %s", err)
+			v.item.Saved = false
+			errs++
 		}
 
-		v.item.Saved = true
 		o = append(o, v.item)
 	}
 	out := wpimage.ImageList(o)
 
-	log.Printf("%d/%d downloaded, %d skipped", got, out.SavedNum(), out.SavedNum()-got)
+	log.Printf("%d/%d downloaded, %d skipped, %d errors", got, len(out), len(out)-got, errs)
 
 	buf := bytes.Buffer{}
 	if err := out.Marshal(&buf); err != nil {
@@ -240,7 +245,7 @@ func saveImage(in []byte, p string, w uint, q int) error {
 	}
 	j, err := wpimage.MakeJPEG(in, q, w)
 	if err != nil {
-		return fmt.Errorf("jpeg %s: %s", p, err)
+		return err
 	}
 	err = ioutil.WriteFile(p, j, 0644)
 	if err != nil {
