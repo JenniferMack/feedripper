@@ -24,6 +24,7 @@ type ImageData struct {
 	Err       string `json:"err"`
 }
 
+// doFilter
 func (i *ImageData) ParseImageURL(h string) int {
 	if i.Saved {
 		return 1
@@ -47,16 +48,17 @@ func (i *ImageData) ParseImageURL(h string) int {
 
 	data.RawQuery = ""
 	i.Path = data.String()
+
+	if i.Resp >= 400 {
+		i.LocalPath = makeLocalPath("images", "404.jpg")
+		return 1
+	}
 	i.LocalPath = makeLocalPath("images", i.Path)
 	return 1
 }
 
+// doVerify
 func (i *ImageData) CheckImageStatus() (int, error) {
-	if i.Resp != 0 || i.Valid {
-		i.Err = ""
-		return 0, nil
-	}
-
 	if fileOnDisk(i.LocalPath) {
 		i.Saved = true
 		i.Valid = true
@@ -64,24 +66,50 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 	}
 
 	// reset, no file
+	i.Valid = false
 	i.Saved = false
+	i.Resp = 0
+	i.Err = ""
 
 	resp, err := http.Head(i.Path)
 	if err != nil {
 		i.Err = err.Error()
-		return 1, fmt.Errorf("http head: %s", err)
+		return 1, fmt.Errorf("head: %s", err)
 	}
 	defer resp.Body.Close()
 
 	sc := resp.StatusCode
 	i.Resp = sc
-	i.Err = ""
 	i.Valid = true
 	if sc >= 400 {
+		i.Valid = false
 		i.LocalPath = makeLocalPath("images", "404.jpg")
-		i.Saved = true
 	}
 	return 1, nil
+}
+
+// doFetch
+func (i *ImageData) FetchImage(d string) ([]byte, error) {
+	if !i.Valid {
+		return nil, nil
+	}
+	if i.Saved {
+		return nil, nil
+	}
+
+	// do downlaod
+	b, c, err := fetchImageData(i.Path)
+	if err != nil {
+		i.Err = err.Error()
+		return nil, fmt.Errorf("fetch: %s", err)
+	}
+
+	i.Resp = c
+	if c != 200 {
+		i.LocalPath = makeLocalPath("images", "404.jpg")
+		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
+	}
+	return b, nil
 }
 
 func fetchImageData(u string) ([]byte, int, error) {
@@ -96,27 +124,6 @@ func fetchImageData(u string) ([]byte, int, error) {
 		return nil, 0, err
 	}
 	return data, resp.StatusCode, nil
-}
-
-func (i *ImageData) FetchImage(d string) ([]byte, error) {
-	if !i.Valid {
-		return nil, nil
-	}
-	if i.Saved {
-		return nil, nil
-	}
-	// do downlaod
-	b, c, err := fetchImageData(i.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	if c != 200 {
-		i.Resp = c
-		i.LocalPath = makeLocalPath("images", "404.jpg")
-		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
-	}
-	return b, nil
 }
 
 func makeLocalPath(dir, path string) string {

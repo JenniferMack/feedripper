@@ -17,7 +17,7 @@ func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 	o := []wpimage.ImageData{}
 	for v := range ch {
 		if v.Err != "" {
-			log.Printf("[error] %s", v.Err)
+			log.Printf("[  error] %s", v.Err)
 			n++
 		}
 		o = append(o, v)
@@ -25,7 +25,7 @@ func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 	out := wpimage.ImageList(o)
 
 	log.Printf("%d images checked, %d found, %d not found, %d errors",
-		len(out), out.ValidNum(), len(out)-out.ValidNum(), n)
+		len(out), out.SavedNum(), len(out)-out.SavedNum(), n)
 
 	buf := bytes.Buffer{}
 	if err := out.Marshal(&buf); err != nil {
