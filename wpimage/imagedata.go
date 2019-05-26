@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -24,7 +25,7 @@ type ImageData struct {
 }
 
 func (i *ImageData) ParseImageURL(h string) int {
-	if i.Resp != 0 || i.Valid {
+	if i.Saved {
 		return 1
 	}
 
@@ -46,6 +47,7 @@ func (i *ImageData) ParseImageURL(h string) int {
 
 	data.RawQuery = ""
 	i.Path = data.String()
+	i.LocalPath = makeLocalPath("images", i.Path)
 	return 1
 }
 
@@ -55,6 +57,15 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 		return 0, nil
 	}
 
+	if fileOnDisk(i.LocalPath) {
+		i.Saved = true
+		i.Valid = true
+		return 0, nil
+	}
+
+	// reset, no file
+	i.Saved = false
+
 	resp, err := http.Head(i.Path)
 	if err != nil {
 		i.Err = err.Error()
@@ -63,45 +74,59 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 	defer resp.Body.Close()
 
 	sc := resp.StatusCode
-	if sc < 400 {
-		i.Valid = true
-	}
 	i.Resp = sc
 	i.Err = ""
-	return 0, nil
+	i.Valid = true
+	if sc >= 400 {
+		i.LocalPath = makeLocalPath("images", "404.jpg")
+		i.Saved = true
+	}
+	return 1, nil
 }
 
-func fetchImageData(u string) ([]byte, error) {
+func fetchImageData(u string) ([]byte, int, error) {
 	resp, err := http.Get(u)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return data, nil
+	return data, resp.StatusCode, nil
 }
 
 func (i *ImageData) FetchImage(d string) ([]byte, error) {
 	if !i.Valid {
-		i.LocalPath = filepath.Join(d, "404.jpg")
 		return nil, nil
 	}
 	if i.Saved {
 		return nil, nil
 	}
 	// do downlaod
-	b, err := fetchImageData(i.Path)
+	b, c, err := fetchImageData(i.Path)
 	if err != nil {
 		return nil, err
 	}
 
-	p := filepath.Base(i.Path)
+	if c != 200 {
+		i.Resp = c
+		i.LocalPath = makeLocalPath("images", "404.jpg")
+		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
+	}
+	return b, nil
+}
+
+func makeLocalPath(dir, path string) string {
+	p := filepath.Base(path)
 	e := filepath.Ext(p)
 	p = strings.TrimSuffix(p, e) + ".jpg"
-	i.LocalPath = filepath.Join(d, p)
-	return b, nil
+	return filepath.Join(dir, p)
+}
+
+func fileOnDisk(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }
