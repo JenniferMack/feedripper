@@ -72,8 +72,8 @@ func doAction(a string, c wpfeed.Config) error {
 			return err
 		}
 
-		out, e = doUpdate(list, htm, paths["html"], wr)
-		outfile = paths["html"]
+		out, e = doUpdate(list, htm, paths["html-img"], wr)
+		outfile = paths["html-img"]
 	}
 
 	if e != nil {
