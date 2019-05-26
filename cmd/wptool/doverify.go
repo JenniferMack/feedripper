@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"log"
-	"sync"
 
 	"repo.local/wputil/wpimage"
 )
@@ -11,43 +10,17 @@ import (
 func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 	log.Printf("> verifying image URLs [%s]", path)
 
-	type carrier struct {
-		err  error
-		item wpimage.ImageData
-	}
-	wg := sync.WaitGroup{}
-	ch := make(chan carrier, 10)
-
-	for _, v := range list {
-		wg.Add(1)
-		go func(i wpimage.ImageData) {
-			defer wg.Done()
-
-			n, err := i.CheckImageStatus()
-			if *flagImageVerbose {
-				if n == 1 {
-					log.Printf("[checked] %d: %s", i.Resp, trim(80, i.Path))
-				} else {
-					log.Printf("[skipped] on disk: %s", trim(80, i.LocalPath))
-				}
-			}
-			re := carrier{item: i, err: err}
-			ch <- re
-		}(v)
-	}
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
+	ch := make(chan wpimage.ImageData, 10)
+	go list.CheckStatus(ch, *flagImageVerbose)
 
 	n := 0
 	o := []wpimage.ImageData{}
 	for v := range ch {
-		if v.err != nil {
-			log.Printf("[error] %s", v.err)
+		if v.Err != "" {
+			log.Printf("[error] %s", v.Err)
 			n++
 		}
-		o = append(o, v.item)
+		o = append(o, v)
 	}
 	out := wpimage.ImageList(o)
 

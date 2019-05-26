@@ -74,11 +74,13 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 	defer resp.Body.Close()
 
 	sc := resp.StatusCode
-	if sc < 400 {
-		i.Valid = true
-	}
 	i.Resp = sc
 	i.Err = ""
+	i.Valid = true
+	if sc >= 400 {
+		i.LocalPath = makeLocalPath("images", "404.jpg")
+		i.Saved = true
+	}
 	return 1, nil
 }
 
@@ -111,6 +113,7 @@ func (i *ImageData) FetchImage(d string) ([]byte, error) {
 
 	if c != 200 {
 		i.Resp = c
+		i.LocalPath = makeLocalPath("images", "404.jpg")
 		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
 	}
 	return b, nil

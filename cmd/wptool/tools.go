@@ -85,11 +85,3 @@ func size(b int) string {
 	}
 	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMG"[exp])
 }
-
-func trim(l int, s string) string {
-	if len(s) <= l {
-		return s
-	}
-	cut := len(s) - l
-	return "..." + s[cut+3:]
-}
