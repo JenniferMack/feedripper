@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"strings"
+	"sync"
+
+	"repo.local/wputil"
 )
 
 type ImageList []ImageData
@@ -14,6 +19,54 @@ func (i ImageList) SetDefaults(q int, w uint, tls bool) {
 		i[k].ImgWidth = w
 		i[k].UseTLS = tls
 	}
+}
+
+func (i ImageList) CheckStatus(ch chan ImageData, verb bool) {
+	list := make(map[string]ImageData)
+	for _, v := range i {
+		list[v.Path] = v
+	}
+	wg := sync.WaitGroup{}
+	for _, v := range list {
+		wg.Add(1)
+		go func(d ImageData) {
+			defer wg.Done()
+
+			n, err := d.CheckImageStatus()
+			if verb {
+				if err != nil {
+					log.Printf("[  error] %s", d.Err)
+				}
+				if n == 1 {
+					log.Printf("[checked] %d: %s", d.Resp, wputil.Trim(80, d.Path))
+				} else {
+					log.Printf("[skipped] on disk: %s", wputil.Trim(80, d.LocalPath))
+				}
+			}
+			ch <- d
+		}(v)
+	}
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+}
+
+func noQs(s string) string {
+	if strings.Contains(s, "?") {
+		n := strings.Index(s, "?")
+		s = s[:n]
+	}
+	return s
+}
+
+func (i ImageList) MatchRawPath(m string) (string, bool) {
+	for _, v := range i {
+		if noQs(v.Rawpath) == noQs(m) {
+			return v.LocalPath, true
+		}
+	}
+	return "", false
 }
 
 func (i ImageList) SavedNum() int {

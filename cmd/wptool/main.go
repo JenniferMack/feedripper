@@ -28,6 +28,7 @@ var (
 	flagImageFilter  = imageCmd.Bool("filter", false, "filter image URLs")
 	flagImageVerify  = imageCmd.Bool("verify", false, "verify images are downloadable")
 	flagImageFetch   = imageCmd.Bool("fetch", false, "fetch images")
+	flagImageUpdate  = imageCmd.Bool("update", false, "update HTML with image status")
 	flagImageVerbose = imageCmd.Bool("v", false, "prints status of each download")
 )
 
@@ -94,6 +95,9 @@ func main() {
 		}
 		if *flagImageFetch {
 			actions = append(actions, "fetch")
+		}
+		if *flagImageUpdate {
+			actions = append(actions, "update")
 		}
 		errs(images(confFile, actions), "image")
 		return
