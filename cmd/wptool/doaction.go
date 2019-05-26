@@ -48,7 +48,12 @@ func doAction(a string, c wpfeed.Config) error {
 	var e error
 	outfile := paths["images"]
 	wr := os.Stderr
+
 	switch a {
+	case "status":
+		doStatus(list, paths["images"], wr)
+		return nil
+
 	case "parse":
 		out, e = doParse(list, paths["images"], paths["html"])
 

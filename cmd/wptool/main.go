@@ -30,6 +30,7 @@ var (
 	flagImageFetch   = imageCmd.Bool("fetch", false, "fetch images")
 	flagImageUpdate  = imageCmd.Bool("update", false, "update HTML with image status")
 	flagImageVerbose = imageCmd.Bool("v", false, "prints status of each download")
+	flagImageStatus  = imageCmd.Bool("status", false, "prints status report")
 )
 
 func init() {
@@ -98,6 +99,9 @@ func main() {
 		}
 		if *flagImageUpdate {
 			actions = append(actions, "update")
+		}
+		if *flagImageStatus {
+			actions = []string{"status"}
 		}
 		errs(images(confFile, actions), "image")
 		return
