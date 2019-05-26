@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 
@@ -9,13 +10,13 @@ import (
 	"repo.local/wputil/wpimage"
 )
 
-func doUpdate(list wpimage.ImageList, in []byte, n string, out io.Writer) ([]byte, error) {
+func doUpdate(list wpimage.ImageList, in []byte, name string, out io.Writer) ([]byte, error) {
 	log.SetOutput(out)
-	log.Printf("> updating %s", n)
+	log.Printf("> updating %s", name)
 
 	doc, err := html.Parse(bytes.NewBuffer(in))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("html parse: %s", err)
 	}
 
 	var imgcnt, chgcnt int
@@ -37,10 +38,10 @@ func doUpdate(list wpimage.ImageList, in []byte, n string, out io.Writer) ([]byt
 	buf := bytes.Buffer{}
 	err = html.Render(&buf, doc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("render: %s", err)
 	}
 	log.Printf("%d images found, %d URLs modified", imgcnt, chgcnt)
-	log.Printf("> [%s/%d] %s", size(buf.Len()), imgcnt, n)
+	log.Printf("> [%s/%d] %s", size(buf.Len()), imgcnt, name)
 
 	return buf.Bytes(), nil
 }
