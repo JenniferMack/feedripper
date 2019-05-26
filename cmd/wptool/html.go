@@ -43,11 +43,9 @@ func regexDefault() []wphtml.RegexList {
 			Replace: `"`},
 		{Pattern: `”`,
 			Replace: `"`},
-		{Pattern: " ?(–|—) ?",
-			Replace: "—"},
 		{Pattern: " ?… ?",
 			Replace: "…"},
-		{Pattern: "–",
+		{Pattern: " ?(–|—|&#8211;|&#8212) ?",
 			Replace: "—"},
 	}
 	return re
