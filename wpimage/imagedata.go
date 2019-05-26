@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -46,7 +47,7 @@ func (i *ImageData) ParseImageURL(h string) int {
 
 	data.RawQuery = ""
 	i.Path = data.String()
-	i.LocalPath = makeLocalPath("images", "404.jpg")
+	i.LocalPath = makeLocalPath("images", i.Path)
 	return 1
 }
 
@@ -55,6 +56,15 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 		i.Err = ""
 		return 0, nil
 	}
+
+	if fileOnDisk(i.LocalPath) {
+		i.Saved = true
+		i.Valid = true
+		return 0, nil
+	}
+
+	// reset, no file
+	i.Saved = false
 
 	resp, err := http.Head(i.Path)
 	if err != nil {
@@ -69,7 +79,7 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 	}
 	i.Resp = sc
 	i.Err = ""
-	return 0, nil
+	return 1, nil
 }
 
 func fetchImageData(u string) ([]byte, int, error) {
@@ -103,8 +113,6 @@ func (i *ImageData) FetchImage(d string) ([]byte, error) {
 		i.Resp = c
 		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
 	}
-
-	i.LocalPath = makeLocalPath(d, i.Path)
 	return b, nil
 }
 
@@ -113,4 +121,9 @@ func makeLocalPath(dir, path string) string {
 	e := filepath.Ext(p)
 	p = strings.TrimSuffix(p, e) + ".jpg"
 	return filepath.Join(dir, p)
+}
+
+func fileOnDisk(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }

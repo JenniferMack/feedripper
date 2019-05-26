@@ -23,7 +23,14 @@ func doVerify(list wpimage.ImageList, path string) ([]byte, error) {
 		go func(i wpimage.ImageData) {
 			defer wg.Done()
 
-			_, err := i.CheckImageStatus()
+			n, err := i.CheckImageStatus()
+			if *flagImageVerbose {
+				if n == 1 {
+					log.Printf("[checked] %d: %s", i.Resp, trim(80, i.Path))
+				} else {
+					log.Printf("[skipped] on disk: %s", trim(80, i.LocalPath))
+				}
+			}
 			re := carrier{item: i, err: err}
 			ch <- re
 		}(v)
