@@ -25,8 +25,8 @@ func doVerify(list wpimage.ImageList, paths wpfeed.Paths) ([]byte, error) {
 	}
 	out := wpimage.ImageList(o)
 
-	log.Printf("%d images checked, %d found, %d not found, %d errors",
-		len(out), out.SavedNum(), len(out)-out.SavedNum(), n)
+	log.Printf("%d images checked, %d found, %d not found, %d on disk, %d errors",
+		len(out), out.ValidNum(), len(out)-out.ValidNum(), out.SavedNum(), n)
 
 	buf := bytes.Buffer{}
 	if err := out.Marshal(&buf); err != nil {

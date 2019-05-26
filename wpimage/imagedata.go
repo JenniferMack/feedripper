@@ -62,6 +62,7 @@ func (i *ImageData) CheckImageStatus(img404 string) (int, error) {
 	if fileOnDisk(i.LocalPath) {
 		i.Saved = true
 		i.Valid = true
+		i.Err = ""
 		return 0, nil
 	}
 

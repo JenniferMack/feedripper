@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
@@ -22,7 +23,7 @@ func doStatus(list wpimage.ImageList, name string, out io.Writer) {
 	log.SetOutput(&buf)
 	for k, v := range list {
 		if v.Err != "" {
-			log.Printf("%d - %s", k, v.Err)
+			log.Printf("%d - %s", k, wputil.Trim(80, v.Err))
 			n++
 		}
 	}
