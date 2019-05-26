@@ -21,7 +21,7 @@ func (i ImageList) SetDefaults(q int, w uint, tls bool) {
 	}
 }
 
-func (i ImageList) CheckStatus(ch chan ImageData, verb bool) {
+func (i ImageList) CheckStatus(ch chan ImageData, verb bool, img404 string) {
 	list := make(map[string]ImageData)
 	for _, v := range i {
 		list[v.Path] = v
@@ -32,15 +32,15 @@ func (i ImageList) CheckStatus(ch chan ImageData, verb bool) {
 		go func(d ImageData) {
 			defer wg.Done()
 
-			n, err := d.CheckImageStatus()
+			n, err := d.CheckImageStatus(img404)
 			if verb {
 				if err != nil {
 					log.Printf("[  error] %s", d.Err)
 				}
 				if n == 1 {
-					log.Printf("[checked] %d: %s", d.Resp, wputil.Trim(80, d.Path))
+					log.Printf("[checked] %d: %s", d.Resp, wputil.Trim(65, d.Path))
 				} else {
-					log.Printf("[skipped] on disk: %s", wputil.Trim(80, d.LocalPath))
+					log.Printf("[skipped] on disk: %s", wputil.Trim(65, d.LocalPath))
 				}
 			}
 			ch <- d
@@ -73,7 +73,7 @@ func (i ImageList) SavedNum() int {
 	n := 0
 	for _, v := range i {
 		if v.Saved {
-			n += 1
+			n++
 		}
 	}
 	return n

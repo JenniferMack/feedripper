@@ -8,11 +8,12 @@ import (
 	"log"
 	"sync"
 
+	"repo.local/wputil/wpfeed"
 	"repo.local/wputil/wpimage"
 )
 
-func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, error) {
-	log.Printf("> fetching images [%s]", path)
+func doFetch(list wpimage.ImageList, paths wpfeed.Paths, wr io.Writer) ([]byte, error) {
+	log.Printf("> fetching images [%s]", paths["images"])
 	log.SetOutput(wr)
 
 	type carrier struct {
@@ -28,7 +29,7 @@ func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, er
 		go func(i wpimage.ImageData) {
 			defer wg.Done()
 
-			b, err := i.FetchImage(dir)
+			b, err := i.FetchImage(paths["imageDir"])
 			out := carrier{item: i, image: b, err: err}
 			ch <- out
 		}(v)
@@ -41,24 +42,24 @@ func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, er
 	o := []wpimage.ImageData{}
 	var got, errs int
 	for v := range ch {
-		v.item.Saved = true
-
 		if v.err != nil {
 			log.Printf("[error] fetching: %s", v.err)
-			v.item.Saved = false
 			errs++
 		}
+
 		if v.image != nil {
 			got++
 		}
 
-		err := saveImage(v.image, v.item.LocalPath, v.item.ImgWidth, v.item.ImgQual)
+		ok, err := saveImage(v.image, v.item.LocalPath, v.item.ImgWidth, v.item.ImgQual)
 		if err != nil {
 			log.Printf("[error] saving: %s", err)
-			v.item.Saved = false
 			errs++
 		}
-
+		// don't bother existing saves
+		if ok {
+			v.item.Saved = true
+		}
 		o = append(o, v.item)
 	}
 	out := wpimage.ImageList(o)
@@ -67,31 +68,31 @@ func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, er
 	if errs == 1 {
 		suffix = ""
 	}
-	log.Printf("%d/%d downloaded, %d error%s, %d prev. saved", got, len(out), errs, suffix, len(out)-got)
+	log.Printf("%d/%d downloaded, %d error%s, %d prev. saved", got, len(out), errs, suffix, list.SavedNum())
 
 	buf := bytes.Buffer{}
 	if err := out.Marshal(&buf); err != nil {
 		return nil, err
 	}
 
-	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), path)
+	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), paths["images"])
 	return buf.Bytes(), nil
 }
 
-func saveImage(in []byte, p string, w uint, q int) error {
+func saveImage(in []byte, p string, w uint, q int) (bool, error) {
 	if in == nil {
-		return nil
+		return false, nil
 	}
 	j, err := wpimage.MakeJPEG(in, q, w)
 	if err != nil {
-		return err
+		return false, err
 	}
 	err = ioutil.WriteFile(p, j, 0644)
 	if err != nil {
-		return fmt.Errorf("disk %s: %s", p, err)
+		return false, fmt.Errorf("disk %s: %s", p, err)
 	}
 	if *flagImageVerbose {
 		log.Printf("[%s|%s]", size(len(j)), p)
 	}
-	return nil
+	return true, nil
 }

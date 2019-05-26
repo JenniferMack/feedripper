@@ -26,6 +26,7 @@ type (
 		UseTLS     bool      `json:"use_tls"`
 		ImageQual  int       `json:"image_qual"`
 		ImageWidth uint      `json:"image_width"`
+		Image404   string    `json:"image_404"`
 		Language   string    `json:"language"`
 		SiteURL    string    `json:"site_url"`
 		Separator  string    `json:"separator"`
@@ -49,9 +50,11 @@ type (
 		Name string `json:"name"`
 		URL  string `json:"url"`
 	}
+
+	Paths map[string]string
 )
 
-func (c Config) Paths(d string, e error) (map[string]string, error) {
+func (c Config) Paths(d string, e error) (Paths, error) {
 	if e != nil {
 		return nil, fmt.Errorf("unable to resolve working directory %s", e)
 	}
@@ -65,6 +68,8 @@ func (c Config) Paths(d string, e error) (map[string]string, error) {
 	paths["json"] = filepath.Join(c.WorkDir, name+".json")
 	paths["images"] = filepath.Join(c.WorkDir, name+"-images.json")
 	paths["html"] = filepath.Join(c.WorkDir, name+".html")
+	paths["html-img"] = filepath.Join(c.WorkDir, name+"-images.html")
+	paths["404-img"] = filepath.Join(c.WorkDir, c.Image404)
 	paths["jsonDir"] = filepath.Join(c.WorkDir, c.JSONDir)
 	paths["rssDir"] = filepath.Join(c.WorkDir, c.RSSDir)
 	paths["imageDir"] = filepath.Join(c.WorkDir, c.ImageDir)

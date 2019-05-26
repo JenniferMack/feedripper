@@ -48,18 +48,23 @@ func doAction(a string, c wpfeed.Config) error {
 	var e error
 	outfile := paths["images"]
 	wr := os.Stderr
+
 	switch a {
+	case "status":
+		doStatus(list, paths["images"], wr)
+		return nil
+
 	case "parse":
 		out, e = doParse(list, paths["images"], paths["html"])
 
 	case "filter":
-		out, e = doFilter(list, paths["images"], c.SiteURL)
+		out, e = doFilter(list, c.SiteURL, paths)
 
 	case "verify":
-		out, e = doVerify(list, paths["images"])
+		out, e = doVerify(list, paths)
 
 	case "fetch":
-		out, e = doFetch(list, paths["images"], paths["imageDir"], wr)
+		out, e = doFetch(list, paths, wr)
 
 	case "update":
 		htm, err := ioutil.ReadFile(paths["html"])
@@ -67,8 +72,8 @@ func doAction(a string, c wpfeed.Config) error {
 			return err
 		}
 
-		out, e = doUpdate(list, htm, paths["html"], wr)
-		outfile = paths["html"]
+		out, e = doUpdate(list, htm, paths["html-img"], wr)
+		outfile = paths["html-img"]
 	}
 
 	if e != nil {
