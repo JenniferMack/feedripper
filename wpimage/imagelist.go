@@ -16,6 +16,15 @@ func (i ImageList) SetDefaults(q int, w uint, tls bool) {
 	}
 }
 
+func (i ImageList) MatchRawPath(m string) (string, bool) {
+	for _, v := range i {
+		if v.Rawpath == m {
+			return v.LocalPath, true
+		}
+	}
+	return "", false
+}
+
 func (i ImageList) SavedNum() int {
 	n := 0
 	for _, v := range i {

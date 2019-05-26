@@ -24,7 +24,7 @@ type ImageData struct {
 }
 
 func (i *ImageData) ParseImageURL(h string) int {
-	if i.Resp != 0 || i.Valid {
+	if i.Saved {
 		return 1
 	}
 
@@ -46,6 +46,7 @@ func (i *ImageData) ParseImageURL(h string) int {
 
 	data.RawQuery = ""
 	i.Path = data.String()
+	i.LocalPath = makeLocalPath("images", "404.jpg")
 	return 1
 }
 
@@ -87,7 +88,6 @@ func fetchImageData(u string) ([]byte, int, error) {
 
 func (i *ImageData) FetchImage(d string) ([]byte, error) {
 	if !i.Valid {
-		i.LocalPath = filepath.Join(d, "404.jpg")
 		return nil, nil
 	}
 	if i.Saved {
@@ -100,14 +100,17 @@ func (i *ImageData) FetchImage(d string) ([]byte, error) {
 	}
 
 	if c != 200 {
-		i.LocalPath = filepath.Join(d, "404.jpg")
 		i.Resp = c
 		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
 	}
 
-	p := filepath.Base(i.Path)
+	i.LocalPath = makeLocalPath(d, i.Path)
+	return b, nil
+}
+
+func makeLocalPath(dir, path string) string {
+	p := filepath.Base(path)
 	e := filepath.Ext(p)
 	p = strings.TrimSuffix(p, e) + ".jpg"
-	i.LocalPath = filepath.Join(d, p)
-	return b, nil
+	return filepath.Join(dir, p)
 }

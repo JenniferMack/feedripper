@@ -46,6 +46,7 @@ func doAction(a string, c wpfeed.Config) error {
 
 	var out []byte
 	var e error
+	outfile := paths["images"]
 	wr := os.Stderr
 	switch a {
 	case "parse":
@@ -61,13 +62,19 @@ func doAction(a string, c wpfeed.Config) error {
 		out, e = doFetch(list, paths["images"], paths["imageDir"], wr)
 
 	case "update":
-		out, e = doUpdate(list, paths["images"], paths["html"], wr)
+		htm, err := ioutil.ReadFile(paths["html"])
+		if err != nil {
+			return err
+		}
+
+		out, e = doUpdate(list, htm, paths["html"], wr)
+		outfile = paths["html"]
 	}
 
 	if e != nil {
 		return err
 	}
-	return ioutil.WriteFile(paths["images"], out, 0644)
+	return ioutil.WriteFile(outfile, out, 0644)
 }
 
 func readExistingFile(p string) (wpimage.ImageList, error) {
