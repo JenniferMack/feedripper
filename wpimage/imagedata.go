@@ -25,7 +25,7 @@ type ImageData struct {
 }
 
 // doFilter
-func (i *ImageData) ParseImageURL(h string) int {
+func (i *ImageData) ParseImageURL(h, dir, img404 string) int {
 	if i.Saved {
 		return 1
 	}
@@ -50,15 +50,15 @@ func (i *ImageData) ParseImageURL(h string) int {
 	i.Path = data.String()
 
 	if i.Resp >= 400 {
-		i.LocalPath = makeLocalPath("images", "404.jpg")
+		i.LocalPath = img404
 		return 1
 	}
-	i.LocalPath = makeLocalPath("images", i.Path)
+	i.LocalPath = makeLocalPath(dir, i.Path)
 	return 1
 }
 
 // doVerify
-func (i *ImageData) CheckImageStatus() (int, error) {
+func (i *ImageData) CheckImageStatus(img404 string) (int, error) {
 	if fileOnDisk(i.LocalPath) {
 		i.Saved = true
 		i.Valid = true
@@ -83,13 +83,13 @@ func (i *ImageData) CheckImageStatus() (int, error) {
 	i.Valid = true
 	if sc >= 400 {
 		i.Valid = false
-		i.LocalPath = makeLocalPath("images", "404.jpg")
+		i.LocalPath = img404
 	}
 	return 1, nil
 }
 
 // doFetch
-func (i *ImageData) FetchImage(d string) ([]byte, error) {
+func (i *ImageData) FetchImage(img404 string) ([]byte, error) {
 	if !i.Valid {
 		return nil, nil
 	}
@@ -106,7 +106,7 @@ func (i *ImageData) FetchImage(d string) ([]byte, error) {
 
 	i.Resp = c
 	if c != 200 {
-		i.LocalPath = makeLocalPath("images", "404.jpg")
+		i.LocalPath = img404
 		return nil, fmt.Errorf("%d: %s", c, filepath.Base(i.Path))
 	}
 	return b, nil

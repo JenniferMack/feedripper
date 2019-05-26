@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"log"
 
+	"repo.local/wputil/wpfeed"
 	"repo.local/wputil/wpimage"
 )
 
-func doFilter(list wpimage.ImageList, path, u string) ([]byte, error) {
-	log.Printf("> parsing image URLs [%s]", path)
+func doFilter(list wpimage.ImageList, host string, paths wpfeed.Paths) ([]byte, error) {
+	log.Printf("> parsing image URLs [%s]", paths["images"])
 
 	n := 0
 	for k := range list {
-		n += list[k].ParseImageURL(u)
+		n += list[k].ParseImageURL(host, paths["imageDir"], paths["404-img"])
 	}
 	log.Printf("%d vaild URLs, %d errors", n, len(list)-n)
 
@@ -21,6 +22,6 @@ func doFilter(list wpimage.ImageList, path, u string) ([]byte, error) {
 		return nil, err
 	}
 
-	log.Printf("> [%s/%d] %s", size(buf.Len()), len(list), path)
+	log.Printf("> [%s/%d] %s", size(buf.Len()), len(list), paths["images"])
 	return buf.Bytes(), nil
 }

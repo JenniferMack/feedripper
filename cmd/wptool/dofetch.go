@@ -8,11 +8,12 @@ import (
 	"log"
 	"sync"
 
+	"repo.local/wputil/wpfeed"
 	"repo.local/wputil/wpimage"
 )
 
-func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, error) {
-	log.Printf("> fetching images [%s]", path)
+func doFetch(list wpimage.ImageList, paths wpfeed.Paths, wr io.Writer) ([]byte, error) {
+	log.Printf("> fetching images [%s]", paths["images"])
 	log.SetOutput(wr)
 
 	type carrier struct {
@@ -28,7 +29,7 @@ func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, er
 		go func(i wpimage.ImageData) {
 			defer wg.Done()
 
-			b, err := i.FetchImage(dir)
+			b, err := i.FetchImage(paths["imageDir"])
 			out := carrier{item: i, image: b, err: err}
 			ch <- out
 		}(v)
@@ -74,7 +75,7 @@ func doFetch(list wpimage.ImageList, path, dir string, wr io.Writer) ([]byte, er
 		return nil, err
 	}
 
-	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), path)
+	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), paths["images"])
 	return buf.Bytes(), nil
 }
 

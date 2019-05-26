@@ -21,7 +21,7 @@ func (i ImageList) SetDefaults(q int, w uint, tls bool) {
 	}
 }
 
-func (i ImageList) CheckStatus(ch chan ImageData, verb bool) {
+func (i ImageList) CheckStatus(ch chan ImageData, verb bool, img404 string) {
 	list := make(map[string]ImageData)
 	for _, v := range i {
 		list[v.Path] = v
@@ -32,7 +32,7 @@ func (i ImageList) CheckStatus(ch chan ImageData, verb bool) {
 		go func(d ImageData) {
 			defer wg.Done()
 
-			n, err := d.CheckImageStatus()
+			n, err := d.CheckImageStatus(img404)
 			if verb {
 				if err != nil {
 					log.Printf("[  error] %s", d.Err)

@@ -31,7 +31,7 @@ var (
 	flagImageUpdate  = imageCmd.Bool("update", false, "update HTML with image status")
 	flagImageVerbose = imageCmd.Bool("v", false, "prints status of each download")
 	flagImageStatus  = imageCmd.Bool("status", false, "prints status report")
-	flagImageAll     = imageCmd.Bool("all", false, "run full pipeline (parse, filter, verify, fetch, update)")
+	flagImageAll     = imageCmd.Bool("all", false, "run full pipeline (filter, verify, fetch, update)")
 )
 
 func init() {
@@ -105,7 +105,7 @@ func main() {
 			actions = []string{"status"}
 		}
 		if *flagImageAll {
-			actions = []string{"parse", "filter", "verify", "fetch", "update"}
+			actions = []string{"filter", "verify", "fetch", "update"}
 		}
 		errs(images(confFile, actions), "image")
 		return
