@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"sync"
 
 	"repo.local/wputil"
@@ -51,9 +52,17 @@ func (i ImageList) CheckStatus(ch chan ImageData, verb bool) {
 	}()
 }
 
+func noQs(s string) string {
+	if strings.Contains(s, "?") {
+		n := strings.Index(s, "?")
+		s = s[:n]
+	}
+	return s
+}
+
 func (i ImageList) MatchRawPath(m string) (string, bool) {
 	for _, v := range i {
-		if v.Rawpath == m {
+		if noQs(v.Rawpath) == noQs(m) {
 			return v.LocalPath, true
 		}
 	}
