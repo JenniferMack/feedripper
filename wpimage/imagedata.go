@@ -54,6 +54,13 @@ func (i *ImageData) ParseImageURL(h, dir, img404 string) int {
 		return 1
 	}
 	i.LocalPath = makeLocalPath(dir, i.Path)
+
+	// yt
+	if data.Host == "img.youtube.com" {
+		p := data.Path
+		p = strings.ReplaceAll(p, "/", "-")
+		i.LocalPath = makeLocalPath(dir, p[4:])
+	}
 	return 1
 }
 
