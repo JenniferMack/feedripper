@@ -67,12 +67,7 @@ func doAction(a string, c wpfeed.Config) error {
 		out, e = doFetch(list, paths, wr)
 
 	case "update":
-		htm, err := ioutil.ReadFile(paths["html"])
-		if err != nil {
-			return err
-		}
-
-		out, e = doUpdate(list, htm, paths["html-img"], wr)
+		out, e = doUpdate(list, paths, c, wr)
 		outfile = paths["html-img"]
 	}
 
