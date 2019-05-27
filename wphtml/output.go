@@ -34,6 +34,10 @@ func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexLi
 
 	html := bytes.Buffer{}
 	for _, t := range tags {
+		if f[t.Name].Len() == 0 {
+			continue
+		}
+
 		html.Write(makeHeader(t.Name))
 		for _, i := range f[t.Name].List() {
 			html.Write(makePost(i, reg))
