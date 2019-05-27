@@ -6,6 +6,7 @@ import (
 	"html"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -78,12 +79,12 @@ func makeHeader(h string) []byte {
 }
 
 func makePost(i wputil.Item, re []RegexList) []byte {
-	h := i.Body.Text
+	h := html.UnescapeString(i.Body.Text)
 	for _, r := range re {
-		h = r.re.ReplaceAllString(h, r.Replace)
+		h = r.ReplaceAll(h)
 	}
 
-	clean := html.UnescapeString(sanitize(h))
+	clean := sanitize(h)
 	clean = makeHTML(clean)
 
 	s := fmt.Sprintf(`
@@ -100,6 +101,13 @@ func makePost(i wputil.Item, re []RegexList) []byte {
 }
 
 func smartenString(s string) string {
+	re := strings.NewReplacer(
+		`“`, `"`,
+		`”`, `"`,
+		`‘`, `'`,
+		`’`, `'`,
+	)
+	s = re.Replace(s)
 	sp := blackfriday.NewSmartypantsRenderer(
 		blackfriday.Smartypants |
 			blackfriday.SmartypantsDashes |

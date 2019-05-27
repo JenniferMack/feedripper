@@ -38,18 +38,20 @@ func regexDefault() []wphtml.RegexList {
 			Replace: ` `}, // non-breaking space literal
 		{Pattern: `&nbsp;`,
 			Replace: ` `}, // non-breaking space entity
-		{Pattern: `‘`,
-			Replace: `'`},
-		{Pattern: `’`,
-			Replace: `'`},
-		{Pattern: `“`,
-			Replace: `"`},
-		{Pattern: `”`,
-			Replace: `"`},
-		{Pattern: " ?… ?",
-			Replace: "…"},
-		{Pattern: " ?(–|—|&#8211;|&#8212) ?",
-			Replace: "—"},
+		{Pattern: ` ?– ?`,
+			Replace: `—`},
+		{Pattern: ` ?… ?`,
+			Replace: `…`},
+		// {Pattern: `‘`,
+		// 	Replace: `'`},
+		// {Pattern: `’`,
+		// 	Replace: `'`},
+		// {Pattern: `“`,
+		// 	Replace: `"`},
+		// {Pattern: `”`,
+		// 	Replace: `"`},
+		// {Pattern: " ?(–|—|&#8211;|&#8212) ?",
+		// 	Replace: "—"},
 	}
 	return re
 }

@@ -1,11 +1,21 @@
 package wphtml
 
 import (
+	"strings"
 	"testing"
 
 	"repo.local/wputil"
 	"repo.local/wputil/wpfeed"
 )
+
+func TestBackwards(t *testing.T) {
+	h := `”foo bar“`
+	h = strings.ReplaceAll(h, `”`, `"`)
+	h = smartenString(h)
+	if !strings.Contains(h, `&ldquo;`) {
+		t.Error(h)
+	}
+}
 
 func TestHeader(t *testing.T) {
 	h := makeHeader("World's News & Events")
@@ -74,38 +84,6 @@ func data() ([]wputil.Item, wpfeed.Tags) {
 	}
 	return i, t
 }
-
-// func TestPri(t *testing.T) {
-// 	item, tags := data()
-//
-// 	t.Run("bar", func(t *testing.T) {
-// 		n, o := priority(item[0], tags)
-// 		if n != 1 {
-// 			t.Error(n)
-// 		}
-// 		if o != 0 {
-// 			t.Error(o)
-// 		}
-// 	})
-// 	t.Run("foo", func(t *testing.T) {
-// 		n, o := priority(item[1], tags)
-// 		if n != 0 {
-// 			t.Error(n)
-// 		}
-// 		if o != 0 {
-// 			t.Error(o)
-// 		}
-// 	})
-//
-// 	t.Run("copy", func(t *testing.T) {
-// 		cats := make(wpfeed.Tags, len(tags))
-// 		copy(cats, tags)
-// 		sort.Sort(cats)
-// 		if tags[0].Priority != 1 {
-// 			t.Error(cats, tags)
-// 		}
-// 	})
-// }
 
 func TestList(t *testing.T) {
 	t.Skip("pending refactor")
