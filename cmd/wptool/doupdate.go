@@ -19,8 +19,9 @@ func doUpdate(list wpimage.ImageList, in []byte, name string, out io.Writer) ([]
 		return nil, fmt.Errorf("html parse: %s", err)
 	}
 
+	// replace links with local links
 	var imgcnt, chgcnt int
-	fn := func(n *html.Node) {
+	ln := func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "img" {
 			imgcnt++
 			for k, v := range n.Attr {
@@ -34,7 +35,7 @@ func doUpdate(list wpimage.ImageList, in []byte, name string, out io.Writer) ([]
 		}
 	}
 
-	parseHTML(doc, fn)
+	parseHTML(doc, ln)
 	buf := bytes.Buffer{}
 	err = html.Render(&buf, doc)
 	if err != nil {

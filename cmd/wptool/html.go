@@ -27,6 +27,9 @@ func regexDefault() []wphtml.RegexList {
 			Replace: `<a href="$1">audio link</a>`},
 		{Pattern: `\[video ?\](.+)\[/video\]`,
 			Replace: `<a href="$1"><em>Video link</em></a>`},
+		// you tube
+		{Pattern: `<iframe .*src="(https://www\.youtube\.com/embed/)(.+)\?.+".*</iframe>`,
+			Replace: fmt.Sprint("\n<figure>\n<img src=\"https://img.youtube.com/vi/$2/default.jpg\"/>\n<figcaption><a href=\"$1$2\">Video Link</a></figcaption>\n</figure>\n")},
 		{Pattern: `<iframe .*src="(.+?)".*?></iframe>`,
 			Replace: "\n" + `<a href="$1"><em>Video link</em></a>` + "\n"},
 		{Pattern: `(</?h)\d.*?(>)`,

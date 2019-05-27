@@ -24,6 +24,10 @@ func (r *RegexList) Compile() {
 	r.re = regexp.MustCompile(r.Pattern)
 }
 
+func (r RegexList) ReplaceAll(s string) string {
+	return r.re.ReplaceAllString(s, r.Replace)
+}
+
 func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexList) ([]byte, error) {
 	f := makeTaggedList(feed.List(), tags)
 
