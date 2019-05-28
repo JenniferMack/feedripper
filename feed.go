@@ -26,25 +26,27 @@ func (i items) Swap(j, k int) {
 	i[j], i[k] = i[k], i[j]
 }
 
-type Feed struct {
+type feed struct {
+	Name  string `json:"name"`
+	URL   string `json:"url"`
 	items items
 	json  []byte
 	index int
 }
 
 // List returns a slice of Items in the Feed.
-func (f Feed) List() []Item {
+func (f feed) List() []Item {
 	return f.items
 }
 
-// Reverse returns a reversed slice of Items in the Feed
-func (f Feed) Reverse() []Item {
+// Reverse returns a reversed slice of Items in the feed
+func (f feed) Reverse() []Item {
 	sort.Sort(f.items)
 	return f.items
 }
 
-// Len returns the number of feed items.
-func (f Feed) Len() int {
+// Len returns the number of Feed items.
+func (f feed) Len() int {
 	return f.items.Len()
 }
 
@@ -59,8 +61,8 @@ func (f Feed) Len() int {
 // }
 
 // Include returns a Feed containing only the posts with given tags
-func (f Feed) Include(l []string) Feed {
-	var out, inc Feed
+func (f feed) Include(l []string) feed {
+	var out, inc feed
 
 	for _, v := range f.items {
 		if v.hasTagList(l) {
@@ -72,8 +74,8 @@ func (f Feed) Include(l []string) Feed {
 }
 
 // Exclude returns a Feed with excluded posts removed.
-func (f Feed) Exclude(l []string) Feed {
-	var out, exc Feed
+func (f feed) Exclude(l []string) feed {
+	var out, exc feed
 
 	for _, v := range f.items {
 		if !v.hasTagList(l) {
@@ -87,7 +89,7 @@ func (f Feed) Exclude(l []string) Feed {
 // Deadline removes items that are not within `r` days of date `d`.
 // `r` can be either positive or negative.
 // If `r` is zero, an error is returned.
-func (f *Feed) Deadline(d time.Time, r int) error {
+func (f *feed) Deadline(d time.Time, r int) error {
 	if r == 0 {
 		return fmt.Errorf("unable to use range of %d days", r)
 	}
@@ -112,7 +114,7 @@ func (f *Feed) Deadline(d time.Time, r int) error {
 }
 
 // String returns the contents of the Feed as tab indented JSON.
-func (f Feed) String() string {
+func (f feed) String() string {
 	b, err := json.MarshalIndent(f.items, "", "\t")
 	if err != nil {
 		return fmt.Sprintf("json string: %v", err)
@@ -122,7 +124,7 @@ func (f Feed) String() string {
 
 // Merge adds the slice of Item `p` to the feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func (f *Feed) Merge(n []Item) {
+func (f *feed) Merge(n []Item) {
 	i := append(f.items, n...)
 	list := make(map[string]Item)
 
@@ -147,7 +149,7 @@ func (f *Feed) Merge(n []Item) {
 
 // Write appends the contents of `p` (JSON encoded slice of `Item`) to the Feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func (f *Feed) Write(p []byte) (n int, err error) {
+func (f *feed) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
@@ -165,7 +167,7 @@ func (f *Feed) Write(p []byte) (n int, err error) {
 // Read reads the next len(p) bytes from the buffer or until the Feed is drained.
 // The return value n is the number of bytes read. If the buffer has no data to return,
 // err is io.EOF (unless len(p) is zero); otherwise it is nil.
-func (f *Feed) Read(p []byte) (n int, err error) {
+func (f *feed) Read(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
@@ -189,14 +191,14 @@ func (f *Feed) Read(p []byte) (n int, err error) {
 	return n, io.EOF
 }
 
-func (f *Feed) reset() {
+func (f *feed) reset() {
 	f.index = 0
 	f.json = nil
 }
 
 // Reset resets the Feed to be empty,
 // but it retains the underlying storage for use by future writes.
-func (f *Feed) Reset() {
+func (f *feed) Reset() {
 	f.reset()
 	f.items = f.items[:0]
 }
