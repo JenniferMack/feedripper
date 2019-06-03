@@ -134,7 +134,7 @@ func TestDates(t *testing.T) {
 }
 
 func TestNil(t *testing.T) {
-	f := Feed{}
+	f := feed{}
 	_, err := f.Write(nil)
 	if err != nil {
 		t.Error(err)
@@ -142,7 +142,7 @@ func TestNil(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	f := Feed{}
+	f := feed{}
 	f.Write([]byte(s))
 	var str interface{} = f.String()
 	_, ok := str.(string)
@@ -153,7 +153,7 @@ func TestString(t *testing.T) {
 
 func TestInterface(t *testing.T) {
 	t.Run("writer", func(t *testing.T) {
-		f := Feed{}
+		f := feed{}
 		f.Write([]byte(s))
 		if len(f.List()) != 4 {
 			t.Error(len(f.List()))
@@ -162,7 +162,7 @@ func TestInterface(t *testing.T) {
 	})
 
 	t.Run("merge items", func(t *testing.T) {
-		f := Feed{}
+		f := feed{}
 		f.Write([]byte(s2))
 		ti, _ := time.Parse(time.RFC3339, "2019-05-19T12:10:00Z")
 		f.Merge([]Item{{Title: "a string of words", GUID: "foo", PubDate: xmlTime{ti}}})
@@ -178,7 +178,7 @@ func TestInterface(t *testing.T) {
 	})
 
 	t.Run("many writer", func(t *testing.T) {
-		f := Feed{}
+		f := feed{}
 		f.Write([]byte(s))
 		f.Write([]byte(s2))
 		if len(f.List()) != 5 {
@@ -187,7 +187,7 @@ func TestInterface(t *testing.T) {
 	})
 
 	t.Run("reader", func(t *testing.T) {
-		g := Feed{}
+		g := feed{}
 		amt := []int{1, 4, 12, 45, 205, 1500}
 		for _, v := range amt {
 			g.Reset()
@@ -213,7 +213,7 @@ func TestCrazyLong(t *testing.T) {
 		s.WriteRune('a')
 		s.WriteRune('b')
 	}
-	f := Feed{}
+	f := feed{}
 	f.Merge([]Item{{Title: "test", Body: body{Text: s.String()}}})
 	// s.WriteTo(os.Stdout)
 	if strings.Contains(f.String(), "aa") {

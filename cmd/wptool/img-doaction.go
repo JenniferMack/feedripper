@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
@@ -16,7 +16,7 @@ func images(c io.Reader, a []string) error {
 	log.SetFlags(0)
 	log.SetPrefix("[  images] ")
 
-	conf, err := wpfeed.ReadConfig(c)
+	conf, err := wputil.NewConfigList(c)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}
@@ -32,12 +32,12 @@ func images(c io.Reader, a []string) error {
 	return nil
 }
 
-func doAction(a string, c wpfeed.Config) error {
-	paths, err := c.Paths(os.Getwd())
-	if err != nil {
-		return err
-	}
-	list, err := readExistingFile(paths["images"])
+func doAction(a string, c wputil.Config) error {
+	// paths, err := c.Paths(os.Getwd())
+	// if err != nil {
+	// 	return err
+	// }
+	list, err := readExistingFile(c.Paths("image-json"))
 	if err != nil {
 		return err
 	}
@@ -46,29 +46,29 @@ func doAction(a string, c wpfeed.Config) error {
 
 	var out []byte
 	var e error
-	outfile := paths["images"]
+	outfile := c.Paths("image-json")
 	wr := os.Stderr
 
 	switch a {
 	case "status":
-		doStatus(list, paths["images"], wr)
+		doStatus(list, c, wr)
 		return nil
 
 	case "parse":
-		out, e = doParse(list, paths["images"], paths["html"])
+		out, e = doParse(list, c, wr)
 
 	case "filter":
-		out, e = doFilter(list, c.SiteURL, paths)
+		out, e = doFilter(list, c, wr)
 
 	case "verify":
-		out, e = doVerify(list, paths)
+		out, e = doVerify(list, c, wr)
 
 	case "fetch":
-		out, e = doFetch(list, paths, wr)
+		out, e = doFetch(list, c, wr)
 
 	case "update":
-		out, e = doUpdate(list, paths, c, wr)
-		outfile = paths["html-img"]
+		out, e = doUpdate(list, c, wr)
+		outfile = c.Paths("image-html")
 	}
 
 	if e != nil {

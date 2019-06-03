@@ -2,17 +2,21 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"log"
 
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
-func doVerify(list wpimage.ImageList, paths wpfeed.Paths) ([]byte, error) {
-	log.Printf("> verifying image URLs [%s]", paths["images"])
+func doVerify(list wpimage.ImageList, conf wputil.Config, wr io.Writer) ([]byte, error) {
+	log.SetOutput(wr)
+	log.SetPrefix("[  verify] ")
+
+	log.Printf("> verifying image URLs [%s]", conf.Paths("image-json"))
 
 	ch := make(chan wpimage.ImageData, 10)
-	go list.CheckStatus(ch, *flagImageVerbose, paths["404-img"])
+	go list.CheckStatus(ch, *flagImageVerbose, conf.Paths("image-404"))
 
 	n := 0
 	o := []wpimage.ImageData{}
@@ -33,6 +37,6 @@ func doVerify(list wpimage.ImageList, paths wpfeed.Paths) ([]byte, error) {
 		return nil, err
 	}
 
-	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.ValidNum(), paths["images"])
+	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.ValidNum(), conf.Paths("image-json"))
 	return buf.Bytes(), nil
 }

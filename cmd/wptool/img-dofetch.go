@@ -8,13 +8,14 @@ import (
 	"log"
 	"sync"
 
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
-func doFetch(list wpimage.ImageList, paths wpfeed.Paths, wr io.Writer) ([]byte, error) {
-	log.Printf("> fetching images [%s]", paths["images"])
+func doFetch(list wpimage.ImageList, conf wputil.Config, wr io.Writer) ([]byte, error) {
 	log.SetOutput(wr)
+	log.SetPrefix("[   fetch] ")
+	log.Printf("> fetching images [%s]", conf.Paths("image-json"))
 
 	type carrier struct {
 		item  wpimage.ImageData
@@ -29,7 +30,7 @@ func doFetch(list wpimage.ImageList, paths wpfeed.Paths, wr io.Writer) ([]byte, 
 		go func(i wpimage.ImageData) {
 			defer wg.Done()
 
-			b, err := i.FetchImage(paths["imageDir"])
+			b, err := i.FetchImage(conf.Paths("image-dir"))
 			out := carrier{item: i, image: b, err: err}
 			ch <- out
 		}(v)
@@ -75,7 +76,7 @@ func doFetch(list wpimage.ImageList, paths wpfeed.Paths, wr io.Writer) ([]byte, 
 		return nil, err
 	}
 
-	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), paths["images"])
+	log.Printf("> [%s/%d/%d] %s", size(buf.Len()), len(out), out.SavedNum(), conf.Paths("image-json"))
 	return buf.Bytes(), nil
 }
 

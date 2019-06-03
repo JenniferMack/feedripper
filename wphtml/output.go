@@ -12,7 +12,6 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/russross/blackfriday.v2"
 	"repo.local/wputil"
-	"repo.local/wputil/wpfeed"
 )
 
 type RegexList struct {
@@ -29,7 +28,7 @@ func (r RegexList) ReplaceAll(s string) string {
 	return r.re.ReplaceAllString(s, r.Replace)
 }
 
-func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexList) ([]byte, error) {
+func TaggedOutput(feed wputil.Feed, tags []wputil.Tag, sep string, reg []RegexList) ([]byte, error) {
 	f := makeTaggedList(feed.List(), tags)
 
 	html := bytes.Buffer{}
@@ -47,9 +46,9 @@ func TaggedOutput(feed wputil.Feed, tags []wpfeed.Tag, sep string, reg []RegexLi
 	return html.Bytes(), nil
 }
 
-func makeTaggedList(items []wputil.Item, tags wpfeed.Tags) map[string]wputil.Feed {
+func makeTaggedList(items []wputil.Item, tags wputil.Tags) map[string]wputil.Feed {
 	// priority sorted copy of tags
-	byPri := make(wpfeed.Tags, len(tags))
+	byPri := make(wputil.Tags, len(tags))
 	copy(byPri, tags)
 	sort.Sort(byPri)
 
