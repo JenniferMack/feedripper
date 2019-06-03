@@ -59,6 +59,10 @@ func (t Tags) priOutOfRange() bool {
 	return idx > cmp
 }
 
+func (c Config) FeedName(feed string) string {
+	return fmt.Sprintf("%s-%s", feed, c.Paths("json"))
+}
+
 func (c Config) Paths(path string) string {
 	name := c.Name
 	if c.Language != "" {

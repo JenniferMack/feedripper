@@ -24,7 +24,7 @@ func mergeFeeds(conf io.Reader, pretty bool) error {
 		// holds all feeds
 		feeds := wputil.Feed{}
 		for _, f := range v.Feeds {
-			path := filepath.Join(v.JSONDir, f.Name)
+			path := filepath.Join(v.JSONDir, v.FeedName(f.Name))
 			d, err := ioutil.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("reading %s: %s", path, err)
