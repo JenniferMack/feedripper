@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"gitlab.com/dsse/wputils/wpfeed"
 	"repo.local/wputil"
-	"repo.local/wputil/wpfeed"
 )
 
 type comm struct {
@@ -24,7 +23,7 @@ func getFeeds(conf io.Reader, pretty bool) error {
 	log.SetPrefix("[fetching] ")
 	clock := time.Now()
 
-	c, err := wpfeed.ReadConfig(conf)
+	c, err := wputil.NewConfigList(conf)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}
@@ -34,15 +33,12 @@ func getFeeds(conf io.Reader, pretty bool) error {
 		wg := sync.WaitGroup{}
 
 		commChan := make(chan comm)
-		if v.IsWorkDir(os.Getwd()) {
-			v.WorkDir = "."
-		}
 
 		for _, f := range v.Feeds {
 			wg.Add(1)
-			go func(fd wpfeed.Feed) {
+			go func(fd wputil.Feed) {
 				defer wg.Done()
-				commChan <- fetch(fd, pretty, v.WorkDir, v.RSSDir, v.JSONDir)
+				commChan <- fetch(fd, pretty, v)
 			}(f)
 		}
 		go func() {
@@ -72,14 +68,13 @@ func getFeeds(conf io.Reader, pretty bool) error {
 	return nil
 }
 
-func fetch(f wpfeed.Feed, pretty bool, wDir, xDir, jDir string) comm {
-	b, err := f.FetchURL()
+func fetch(f wputil.Feed, pretty bool, c wputil.Config) comm {
+	b, err := wputil.FetchFeed(f)
 	if err != nil {
 		return comm{err: fmt.Errorf("%s", err)}
 	}
 
-	path := filepath.Join(wDir, xDir)
-	err = wpfeed.WriteRawXML(b, path, f.Name)
+	err = wpfeed.WriteRawXML(b, c.RSSDir, c.Paths("name"))
 	if err != nil {
 		return comm{err: fmt.Errorf("xml write: %s", err)}
 	}
@@ -89,7 +84,7 @@ func fetch(f wpfeed.Feed, pretty bool, wDir, xDir, jDir string) comm {
 		return comm{err: fmt.Errorf("json load: %s", err)}
 	}
 
-	path = filepath.Join(wDir, jDir, f.Name+".json")
+	path := filepath.Join(c.JSONDir, c.Paths("json"))
 	n, l, err := mergeAndSave(fd, pretty, path)
 	if err != nil {
 		return comm{err: fmt.Errorf("merge and save: %s", err)}

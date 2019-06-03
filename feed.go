@@ -14,19 +14,11 @@ type items []Item
 
 // Sort interface
 
-func (i items) Len() int {
-	return len(i)
-}
+func (i items) Len() int           { return len(i) }
+func (i items) Less(j, k int) bool { return i[j].PubDate.Before(i[k].PubDate.Time) }
+func (i items) Swap(j, k int)      { i[j], i[k] = i[k], i[j] }
 
-func (i items) Less(j, k int) bool {
-	return i[j].PubDate.Before(i[k].PubDate.Time)
-}
-
-func (i items) Swap(j, k int) {
-	i[j], i[k] = i[k], i[j]
-}
-
-type feed struct {
+type Feed struct {
 	Name  string `json:"name"`
 	URL   string `json:"url"`
 	items items
@@ -34,21 +26,14 @@ type feed struct {
 	index int
 }
 
-// List returns a slice of Items in the Feed.
-func (f feed) List() []Item {
-	return f.items
-}
+// List returns a slice of Items in the feed.
+func (f Feed) List() []Item { return f.items }
 
 // Reverse returns a reversed slice of Items in the feed
-func (f feed) Reverse() []Item {
-	sort.Sort(f.items)
-	return f.items
-}
+func (f Feed) Reverse() []Item { sort.Sort(f.items); return f.items }
 
 // Len returns the number of Feed items.
-func (f feed) Len() int {
-	return f.items.Len()
-}
+func (f Feed) Len() int { return f.items.Len() }
 
 // // Append adds items without checking for duplicates or sorting.
 // func (f *Feed) Append(i Feed) {
@@ -61,8 +46,8 @@ func (f feed) Len() int {
 // }
 
 // Include returns a Feed containing only the posts with given tags
-func (f feed) Include(l []string) feed {
-	var out, inc feed
+func (f Feed) Include(l []string) Feed {
+	var out, inc Feed
 
 	for _, v := range f.items {
 		if v.hasTagList(l) {
@@ -74,8 +59,8 @@ func (f feed) Include(l []string) feed {
 }
 
 // Exclude returns a Feed with excluded posts removed.
-func (f feed) Exclude(l []string) feed {
-	var out, exc feed
+func (f Feed) Exclude(l []string) Feed {
+	var out, exc Feed
 
 	for _, v := range f.items {
 		if !v.hasTagList(l) {
@@ -89,7 +74,7 @@ func (f feed) Exclude(l []string) feed {
 // Deadline removes items that are not within `r` days of date `d`.
 // `r` can be either positive or negative.
 // If `r` is zero, an error is returned.
-func (f *feed) Deadline(d time.Time, r int) error {
+func (f *Feed) Deadline(d time.Time, r int) error {
 	if r == 0 {
 		return fmt.Errorf("unable to use range of %d days", r)
 	}
@@ -114,7 +99,7 @@ func (f *feed) Deadline(d time.Time, r int) error {
 }
 
 // String returns the contents of the Feed as tab indented JSON.
-func (f feed) String() string {
+func (f Feed) String() string {
 	b, err := json.MarshalIndent(f.items, "", "\t")
 	if err != nil {
 		return fmt.Sprintf("json string: %v", err)
@@ -124,7 +109,7 @@ func (f feed) String() string {
 
 // Merge adds the slice of Item `p` to the feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func (f *feed) Merge(n []Item) {
+func (f *Feed) Merge(n []Item) {
 	i := append(f.items, n...)
 	list := make(map[string]Item)
 
@@ -149,7 +134,7 @@ func (f *feed) Merge(n []Item) {
 
 // Write appends the contents of `p` (JSON encoded slice of `Item`) to the Feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func (f *feed) Write(p []byte) (n int, err error) {
+func (f *Feed) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
@@ -167,7 +152,7 @@ func (f *feed) Write(p []byte) (n int, err error) {
 // Read reads the next len(p) bytes from the buffer or until the Feed is drained.
 // The return value n is the number of bytes read. If the buffer has no data to return,
 // err is io.EOF (unless len(p) is zero); otherwise it is nil.
-func (f *feed) Read(p []byte) (n int, err error) {
+func (f *Feed) Read(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
@@ -191,14 +176,14 @@ func (f *feed) Read(p []byte) (n int, err error) {
 	return n, io.EOF
 }
 
-func (f *feed) reset() {
+func (f *Feed) reset() {
 	f.index = 0
 	f.json = nil
 }
 
-// Reset resets the Feed to be empty,
+// Reset resets the feed to be empty,
 // but it retains the underlying storage for use by future writes.
-func (f *feed) Reset() {
+func (f *Feed) Reset() {
 	f.reset()
 	f.items = f.items[:0]
 }

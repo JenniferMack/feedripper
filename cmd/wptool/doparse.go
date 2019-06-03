@@ -2,29 +2,31 @@ package main
 
 import (
 	"bytes"
+	"io"
+	"io/ioutil"
 	"log"
-	"os"
 
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
-func doParse(list wpimage.ImageList, imgPath, htmlPath string) ([]byte, error) {
-	h, err := os.Open(htmlPath)
-	if err != nil {
-		return nil, err
-	}
-	defer h.Close()
+func doParse(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte, error) {
+	log.SetOutput(out)
+	log.SetPrefix("[   parse] ")
 
-	imgs, err := wpimage.ParseHTML(h)
+	b, err := ioutil.ReadFile(conf.Paths("html"))
 	if err != nil {
 		return nil, err
 	}
-	h.Close()
+	imgs, err := wpimage.ParseHTML(bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
 
 	merged := imgs.Merge(list)
-	log.Printf("> parsing HTML [%s]", htmlPath)
-	log.Printf("%-3d images found in %s", len(imgs), htmlPath)
-	log.Printf("%-3d images found in %s", len(list), imgPath)
+	log.Printf("> parsing HTML [%s]", conf.Paths("html"))
+	log.Printf("%-3d images found in %s", len(imgs), conf.Paths("html"))
+	log.Printf("%-3d images found in %s", len(list), conf.Paths("images-json"))
 
 	buf := bytes.Buffer{}
 	if err := merged.Marshal(&buf); err != nil {
@@ -32,6 +34,6 @@ func doParse(list wpimage.ImageList, imgPath, htmlPath string) ([]byte, error) {
 	}
 
 	log.Printf("%-3d unique images recorded", len(merged))
-	log.Printf("> [%s/%d] %s", size(buf.Len()), len(merged), imgPath)
+	log.Printf("> [%s/%d] %s", wputil.FileSize(buf.Len()), len(merged), conf.Paths("images-json"))
 	return buf.Bytes(), nil
 }

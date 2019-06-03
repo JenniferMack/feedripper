@@ -9,18 +9,18 @@ import (
 	"net/url"
 
 	"golang.org/x/net/html"
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
-func doUpdate(list wpimage.ImageList, paths wpfeed.Paths, c wpfeed.Config, out io.Writer) ([]byte, error) {
-	htm, err := ioutil.ReadFile(paths["html"])
+func doUpdate(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte, error) {
+	log.SetOutput(out)
+	log.Printf("> updating %s", conf.Paths("image-html"))
+
+	htm, err := ioutil.ReadFile(conf.Paths("image-html"))
 	if err != nil {
 		return nil, err
 	}
-
-	log.SetOutput(out)
-	log.Printf("> updating %s", paths["html-img"])
 
 	doc, err := html.Parse(bytes.NewBuffer(htm))
 	if err != nil {
@@ -55,8 +55,8 @@ func doUpdate(list wpimage.ImageList, paths wpfeed.Paths, c wpfeed.Config, out i
 				if v.Key == "href" {
 					u, _ := url.Parse(v.Val)
 					if u.Host == "" {
-						u.Host = c.SiteURL
-						if c.UseTLS {
+						u.Host = conf.SiteURL
+						if conf.UseTLS {
 							u.Scheme = "https"
 						} else {
 							u.Scheme = "http"
@@ -76,7 +76,7 @@ func doUpdate(list wpimage.ImageList, paths wpfeed.Paths, c wpfeed.Config, out i
 		return nil, fmt.Errorf("render: %s", err)
 	}
 	log.Printf("%d images found, %d URLs modified", imgcnt, chgcnt)
-	log.Printf("> [%s/%d] %s", size(buf.Len()), imgcnt, paths["html-img"])
+	log.Printf("> [%s/%d] %s", size(buf.Len()), imgcnt, conf.Name+"-images.html")
 
 	return buf.Bytes(), nil
 }

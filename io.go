@@ -6,8 +6,12 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // NewConfigList returns the config info.
@@ -28,9 +32,9 @@ func NewConfigList(in io.Reader) (Configs, error) {
 
 // ReadWPXML reads WordPress RSS feed XML from a io.Reader and returns a populated Feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func ReadWPXML(in io.Reader) (feed, error) {
+func ReadWPXML(in io.Reader) (Feed, error) {
 	r := rss{}
-	f := feed{}
+	f := Feed{}
 
 	err := xml.NewDecoder(in).Decode(&r)
 	if err != nil {
@@ -41,10 +45,16 @@ func ReadWPXML(in io.Reader) (feed, error) {
 	return f, nil
 }
 
+func WriteRawXML(b []byte, dir, name string) error {
+	stamp := "_" + strconv.FormatInt(time.Now().Unix(), 10)
+	path := filepath.Join(dir, name+stamp+".xml")
+	return ioutil.WriteFile(path, b, 0644)
+}
+
 // ReadWPJSON reads JSON from an io.Reader and returns a populated Feed.
 // Duplicates are removed and the internal list is sorted newest first.
-func ReadWPJSON(in io.Reader) (feed, error) {
-	f := feed{}
+func ReadWPJSON(in io.Reader) (Feed, error) {
+	f := Feed{}
 	_, err := io.Copy(&f, in)
 	if err != nil {
 		return f, err
@@ -53,7 +63,7 @@ func ReadWPJSON(in io.Reader) (feed, error) {
 }
 
 // FetchFeed returns an XML feed.
-func FetchFeed(f feed) ([]byte, error) {
+func FetchFeed(f Feed) ([]byte, error) {
 	if status, ok := statusOK(f.URL); !ok {
 		return nil, fmt.Errorf("[%s] %s", status, f.URL)
 	}

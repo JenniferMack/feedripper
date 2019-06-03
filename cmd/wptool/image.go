@@ -6,10 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
@@ -17,19 +15,13 @@ func makeImageList(c io.Reader) error {
 	log.SetFlags(0)
 	log.SetPrefix("[  images] ")
 
-	conf, err := wpfeed.ReadConfig(c)
+	conf, err := wputil.NewConfigList(c)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}
 
 	for _, v := range conf {
-		base := v.Name + "-" + v.Number
-		if v.IsWorkDir(os.Getwd()) {
-			v.WorkDir = "."
-		}
-
-		path := filepath.Join(v.WorkDir, base+".html")
-		b, err := ioutil.ReadFile(path)
+		b, err := ioutil.ReadFile(v.Paths("html"))
 		if err != nil {
 			return err
 		}
@@ -38,13 +30,12 @@ func makeImageList(c io.Reader) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("%d images loaded from %s", len(img), path)
+		log.Printf("%d images loaded from %s", len(img), v.Paths("html"))
 
-		path = filepath.Join(v.WorkDir, base+"-image.json")
 		old := wpimage.ImageList{}
-		b, err = ioutil.ReadFile(path)
+		b, err = ioutil.ReadFile(v.Paths("image-json"))
 		if err != nil {
-			log.Printf("%s does not exist, skipping", path)
+			log.Printf("%s does not exist, skipping", v.Paths("image-json"))
 			b = []byte("[]")
 		}
 
@@ -53,7 +44,7 @@ func makeImageList(c io.Reader) error {
 			return err
 		}
 
-		log.Printf("%d images loaded from %s", len(old), path)
+		log.Printf("%d images loaded from %s", len(old), v.Paths("image-json"))
 		img.Merge(old)
 		log.Printf("%d unique images to check", len(img))
 
@@ -78,9 +69,9 @@ func makeImageList(c io.Reader) error {
 		}
 
 		log.Printf("> [%s %s] %d checked, %d skipped, %d errors", size(buf.Len()),
-			path, nimg+nerr, len(img)-nimg, nerr)
+			v.Paths("image-json"), nimg+nerr, len(img)-nimg, nerr)
 
-		err = ioutil.WriteFile(path, buf.Bytes(), 0644)
+		err = ioutil.WriteFile(v.Paths("image-json"), buf.Bytes(), 0644)
 		if err != nil {
 			return err
 		}

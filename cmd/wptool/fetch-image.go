@@ -6,10 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
@@ -17,19 +15,13 @@ func fetchImages(c io.Reader) error {
 	log.SetFlags(0)
 	log.SetPrefix("[  images] ")
 
-	conf, err := wpfeed.ReadConfig(c)
+	conf, err := wputil.NewConfigList(c)
 	if err != nil {
 		return fmt.Errorf("reading config: %s", err)
 	}
 
 	for _, v := range conf {
-		base := v.Name + "-" + v.Number
-		if v.IsWorkDir(os.Getwd()) {
-			v.WorkDir = "."
-		}
-
-		path := filepath.Join(v.WorkDir, base+"-image.json")
-		b, err := ioutil.ReadFile(path)
+		b, err := ioutil.ReadFile(v.Paths("image-json"))
 		if err != nil {
 			return err
 		}
@@ -43,7 +35,7 @@ func fetchImages(c io.Reader) error {
 		sa := img.SavedNum()
 		va := img.ValidNum()
 
-		log.Printf("%d images loaded from %s", le, path)
+		log.Printf("%d images loaded from %s", le, v.Paths("image-json"))
 		log.Printf("%d/%d images already saved", sa, va)
 		log.Printf("%d images to download", va-sa)
 
@@ -52,9 +44,7 @@ func fetchImages(c io.Reader) error {
 			return nil
 		}
 
-		imgDir := "images"
-		dlpath := filepath.Join(v.WorkDir, imgDir)
-		num, err := img.FetchImages(dlpath)
+		num, err := img.FetchImages(v.Paths("image-dir"))
 		if err != nil {
 			return err
 		}
@@ -65,7 +55,7 @@ func fetchImages(c io.Reader) error {
 		if err != nil {
 			return err
 		}
-		err = ioutil.WriteFile(path, buf.Bytes(), 0644)
+		err = ioutil.WriteFile(v.Paths("image-json"), buf.Bytes(), 0644)
 		if err != nil {
 			return err
 		}

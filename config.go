@@ -1,12 +1,13 @@
 package wputil
 
 import (
+	"fmt"
 	"time"
 )
 
 type (
 	// Config holds the information for saving WordPress feeds.
-	config struct {
+	Config struct {
 		Name       string    `json:"name"`
 		Number     string    `json:"number"`
 		Deadline   time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
@@ -23,11 +24,11 @@ type (
 		Separator  string    `json:"separator"`
 		Tags       Tags      `json:"tags"`
 		Exclude    []string  `json:"exclude"`
-		Feeds      []feed    `json:"feeds"`
+		Feeds      []Feed    `json:"feeds"`
 	}
 
 	// Tag holds the tag name and priority
-	tag struct {
+	Tag struct {
 		Name     string `json:"name"`
 		Text     string `json:"text"`
 		Priority uint   `json:"priority"`
@@ -35,10 +36,10 @@ type (
 	}
 
 	//
-	Configs []config
+	Configs []Config
 
 	//
-	Tags []tag
+	Tags []Tag
 )
 
 // sort interface for Tags
@@ -56,4 +57,28 @@ func (t Tags) priOutOfRange() bool {
 		}
 	}
 	return idx > cmp
+}
+
+func (c Config) Paths(path string) string {
+	switch path {
+	case "name":
+		return fmt.Sprintf("%s-%s", c.Name, c.Language)
+	case "json":
+		return fmt.Sprintf("%s-%s.%s", c.Name, c.Language, path)
+	case "html":
+		return fmt.Sprintf("%s-%s.%s", c.Name, c.Language, path)
+	case "image-json":
+		return fmt.Sprintf("%s-%s-%s.%s", c.Name, c.Language, "image", "json")
+	case "image-html":
+		return fmt.Sprintf("%s-%s-%s.%s", c.Name, c.Language, "image", "html")
+	case "image-dir":
+		return c.ImageDir
+	case "rss-dir":
+		return c.RSSDir
+	case "json-dir":
+		return c.JSONDir
+	case "image-404":
+		return c.Image404
+	}
+	return ""
 }

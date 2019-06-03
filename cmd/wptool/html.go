@@ -7,11 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 
 	"repo.local/wputil"
-	"repo.local/wputil/wpfeed"
 	"repo.local/wputil/wphtml"
 )
 
@@ -75,7 +72,7 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 	log.SetFlags(0)
 	log.SetPrefix("[    html] ")
 
-	conf, err := wpfeed.ReadConfig(c)
+	conf, err := wputil.NewConfigList(c)
 	if err != nil {
 		return fmt.Errorf("loading config: %s", err)
 	}
@@ -97,14 +94,9 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 	for _, v := range conf {
 		log.Printf("> Writing HTML for %s, #%s...", v.Name, v.Number)
 
-		if v.IsWorkDir(os.Getwd()) {
-			v.WorkDir = "."
-		}
-		dirs := filepath.Join(v.WorkDir, v.Name)
-		path := fmt.Sprintf(nameFmt, dirs, v.Number, "json")
-		feed, err := loadFeed(path)
+		feed, err := loadFeed(v.Paths("json"))
 		if err != nil {
-			return fmt.Errorf("reading %s: %s", path, err)
+			return fmt.Errorf("reading %s: %s", v.Paths("json"), err)
 		}
 
 		html, err := wphtml.TaggedOutput(feed, v.Tags, v.Separator, regex)
@@ -112,13 +104,12 @@ func outputHTMLByTags(c, re io.Reader, w io.Writer) error {
 			return fmt.Errorf("html: %s", err)
 		}
 
-		path = fmt.Sprintf(nameFmt, dirs, v.Number, "html")
-		err = ioutil.WriteFile(path, html, 0644)
+		err = ioutil.WriteFile(v.Paths("html"), html, 0644)
 		if err != nil {
-			return fmt.Errorf("writing %s: %s", path, err)
+			return fmt.Errorf("writing %s: %s", v.Paths("html"), err)
 		}
 
-		log.Printf("> [%s/%d] %s", size(len(html)), 0, path)
+		log.Printf("> [%s/%d] %s", size(len(html)), 0, v.Paths("html"))
 	}
 	return nil
 }

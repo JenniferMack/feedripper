@@ -9,11 +9,11 @@ import (
 	"repo.local/wputil/wpimage"
 )
 
-func doStatus(list wpimage.ImageList, name string, out io.Writer) {
+func doStatus(list wpimage.ImageList, conf wputil.Config, out io.Writer) {
 	log.SetOutput(out)
 	log.SetPrefix("[  status] ")
 
-	log.Printf("> Status report for %s", name)
+	log.Printf("> Status report for %s", conf.Paths("name"))
 	log.Printf("%d image paths", len(list))
 	log.Printf("%d valid images", list.ValidNum())
 	log.Printf("%d saved images", list.SavedNum())
@@ -23,7 +23,7 @@ func doStatus(list wpimage.ImageList, name string, out io.Writer) {
 	log.SetOutput(&buf)
 	for k, v := range list {
 		if v.Err != "" {
-			log.Printf("%d - %s", k, wputil.Trim(80, v.Err))
+			log.Printf("%d - %s", k, wputil.TrimLeft(80, v.Err))
 			n++
 		}
 	}
