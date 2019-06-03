@@ -73,6 +73,10 @@ func (i *ImageData) CheckImageStatus(img404 string) (int, error) {
 		return 0, nil
 	}
 
+	if i.Valid && i.Resp == 200 {
+		return 0, nil
+	}
+
 	// reset, no file
 	i.Valid = false
 	i.Saved = false
