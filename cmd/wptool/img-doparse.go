@@ -26,7 +26,7 @@ func doParse(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte,
 	merged := imgs.Merge(list)
 	log.Printf("> parsing HTML [%s]", conf.Paths("html"))
 	log.Printf("%-3d images found in %s", len(imgs), conf.Paths("html"))
-	log.Printf("%-3d images found in %s", len(list), conf.Paths("images-json"))
+	log.Printf("%-3d images found in %s", len(list), conf.Paths("image-json"))
 
 	buf := bytes.Buffer{}
 	if err := merged.Marshal(&buf); err != nil {
@@ -34,6 +34,6 @@ func doParse(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte,
 	}
 
 	log.Printf("%-3d unique images recorded", len(merged))
-	log.Printf("> [%s/%d] %s", wputil.FileSize(buf.Len()), len(merged), conf.Paths("images-json"))
+	log.Printf("> [%s/%d] %s", wputil.FileSize(buf.Len()), len(merged), conf.Paths("image-json"))
 	return buf.Bytes(), nil
 }
