@@ -13,7 +13,7 @@ func doFilter(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte
 	log.SetOutput(out)
 	log.SetPrefix("[  filter] ")
 
-	log.Printf("> parsing image URLs [%s]", conf.Paths("images-json"))
+	log.Printf("> parsing image URLs [%s]", conf.Paths("image-json"))
 
 	n := 0
 	for k := range list {
@@ -26,6 +26,6 @@ func doFilter(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte
 		return nil, err
 	}
 
-	log.Printf("> [%s/%d] %s", size(buf.Len()), len(list), conf.Paths("images-json"))
+	log.Printf("> [%s/%d] %s", size(buf.Len()), len(list), conf.Paths("image-json"))
 	return buf.Bytes(), nil
 }
