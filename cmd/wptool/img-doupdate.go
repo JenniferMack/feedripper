@@ -13,11 +13,12 @@ import (
 	"repo.local/wputil/wpimage"
 )
 
-func doUpdate(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte, error) {
-	log.SetOutput(out)
+func doUpdate(list wpimage.ImageList, conf wputil.Config, wr io.Writer) ([]byte, error) {
+	log.SetOutput(wr)
+	log.SetPrefix("[ replace] ")
 	log.Printf("> updating %s", conf.Paths("image-html"))
 
-	htm, err := ioutil.ReadFile(conf.Paths("image-html"))
+	htm, err := ioutil.ReadFile(conf.Paths("html"))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func doUpdate(list wpimage.ImageList, conf wputil.Config, out io.Writer) ([]byte
 		return nil, fmt.Errorf("render: %s", err)
 	}
 	log.Printf("%d images found, %d URLs modified", imgcnt, chgcnt)
-	log.Printf("> [%s/%d] %s", size(buf.Len()), imgcnt, conf.Name+"-images.html")
+	log.Printf("> [%s/%d] %s", size(buf.Len()), imgcnt, conf.Paths("image-html"))
 
 	return buf.Bytes(), nil
 }
