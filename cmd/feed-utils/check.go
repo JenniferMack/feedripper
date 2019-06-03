@@ -4,18 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 	"time"
 
-	"repo.local/wputil/wpfeed"
+	"repo.local/wputil"
 )
 
 func checkConfig(c io.Reader) string {
 	report := bytes.Buffer{}
 	fmt.Fprintln(&report, "Config report...")
 
-	conf, err := wpfeed.ReadConfig(c)
+	conf, err := wputil.NewConfigList(c)
 	if err != nil {
 		fmt.Fprintln(&report, "invalid JSON")
 		fmt.Fprintln(&report, err)
@@ -37,11 +36,8 @@ func checkConfig(c io.Reader) string {
 		} else {
 			fmt.Fprintf(&report, "%s’s date range: %q to %q\n", v.Name, v.Deadline.AddDate(0, 0, v.Days).Format(time.RFC1123), v.Deadline.Format(time.RFC1123))
 		}
-		fmt.Fprintf(&report, "%s’s working directory is: %q\n", v.Name, v.WorkDir)
-		path := filepath.Join(v.WorkDir, v.JSONDir)
-		fmt.Fprintf(&report, "%s’s json saved to: %q\n", v.Name, path)
-		path = filepath.Join(v.WorkDir, v.RSSDir)
-		fmt.Fprintf(&report, "%s’s xml  saved to: %q\n", v.Name, path)
+		fmt.Fprintf(&report, "%s’s JSON saved to: %q\n", v.Paths("name"), v.Paths("json-dir"))
+		fmt.Fprintf(&report, "%s’s XML  saved to: %q\n", v.Paths("name"), v.Paths("rss-dir"))
 		fmt.Fprintf(&report, "%s’s language is %q\n", v.Name, v.Language)
 		fmt.Fprintf(&report, "%s’s site URL is %q\n", v.Name, v.SiteURL)
 		fmt.Fprintf(&report, "%s’s is collecting from tags:\n", v.Name)

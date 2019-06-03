@@ -60,25 +60,35 @@ func (t Tags) priOutOfRange() bool {
 }
 
 func (c Config) Paths(path string) string {
+	name := c.Name
+	if c.Language != "" {
+		name += "-" + c.Language
+	}
+	if c.Number != "" {
+		name += "_" + c.Number
+	}
+
 	switch path {
 	case "name":
-		return fmt.Sprintf("%s-%s", c.Name, c.Language)
+		return name
 	case "json":
-		return fmt.Sprintf("%s-%s.%s", c.Name, c.Language, path)
+		return fmt.Sprintf("%s.%s", name, path)
+	case "xml":
+		return fmt.Sprintf("%s.%s", name, path)
 	case "html":
-		return fmt.Sprintf("%s-%s.%s", c.Name, c.Language, path)
+		return fmt.Sprintf("%s.%s", name, path)
 	case "image-json":
-		return fmt.Sprintf("%s-%s-%s.%s", c.Name, c.Language, "image", "json")
+		return fmt.Sprintf("%s-%s.%s", name, "image", "json")
 	case "image-html":
-		return fmt.Sprintf("%s-%s-%s.%s", c.Name, c.Language, "image", "html")
+		return fmt.Sprintf("%s-%s.%s", name, "image", "html")
 	case "image-dir":
 		return c.ImageDir
+	case "image-404":
+		return c.Image404
 	case "rss-dir":
 		return c.RSSDir
 	case "json-dir":
 		return c.JSONDir
-	case "image-404":
-		return c.Image404
 	}
 	return ""
 }

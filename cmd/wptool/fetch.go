@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/dsse/wputils/wpfeed"
 	"repo.local/wputil"
 )
 
@@ -74,7 +73,7 @@ func fetch(f wputil.Feed, pretty bool, c wputil.Config) comm {
 		return comm{err: fmt.Errorf("%s", err)}
 	}
 
-	err = wpfeed.WriteRawXML(b, c.RSSDir, c.Paths("name"))
+	err = wputil.WriteRawXML(b, c.RSSDir, f.Name+"-"+c.Paths("name"))
 	if err != nil {
 		return comm{err: fmt.Errorf("xml write: %s", err)}
 	}
@@ -84,7 +83,7 @@ func fetch(f wputil.Feed, pretty bool, c wputil.Config) comm {
 		return comm{err: fmt.Errorf("json load: %s", err)}
 	}
 
-	path := filepath.Join(c.JSONDir, c.Paths("json"))
+	path := filepath.Join(c.JSONDir, f.Name+"-"+c.Paths("json"))
 	n, l, err := mergeAndSave(fd, pretty, path)
 	if err != nil {
 		return comm{err: fmt.Errorf("merge and save: %s", err)}

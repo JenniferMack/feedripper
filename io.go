@@ -17,7 +17,7 @@ import (
 // NewConfigList returns the config info.
 func NewConfigList(in io.Reader) (Configs, error) {
 	c := Configs{}
-	err := json.NewDecoder(in).Decode(c)
+	err := json.NewDecoder(in).Decode(&c)
 	if err != nil {
 		return nil, err
 	}
