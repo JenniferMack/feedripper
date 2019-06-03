@@ -12,6 +12,7 @@ type (
 		Number     string    `json:"number"`
 		Deadline   time.Time `json:"deadline"` //RFC3339 = "2006-01-02T15:04:05Z07:00"
 		Days       int       `json:"days"`
+		SeqName    string    `json:"seq_name"`
 		JSONDir    string    `json:"json_dir"`
 		RSSDir     string    `json:"rss_dir"`
 		ImageDir   string    `json:"image_dir"`
@@ -95,4 +96,22 @@ func (c Config) Paths(path string) string {
 		return c.JSONDir
 	}
 	return ""
+}
+
+func (c Config) Range(prefix string) string {
+	str := c.Deadline
+	end := c.Deadline.AddDate(0, 0, c.Days)
+	if c.Days < 0 {
+		str, end = end, str
+	}
+
+	strFmt := "02"
+	if str.Month() < end.Month() {
+		strFmt += " Jan"
+	}
+
+	if str.Year() < end.Year() {
+		strFmt = "02 Jan 2006"
+	}
+	return fmt.Sprintf("%s %s, %s–%s", prefix, c.Number, str.Format(strFmt), end.Format("02 Jan 2006"))
 }
