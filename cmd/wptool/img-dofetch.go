@@ -13,8 +13,9 @@ import (
 )
 
 func doFetch(list wpimage.ImageList, conf wputil.Config, wr io.Writer) ([]byte, error) {
-	log.Printf("> fetching images [%s]", conf.Paths("images-json"))
 	log.SetOutput(wr)
+	log.SetPrefix("[   fetch] ")
+	log.Printf("> fetching images [%s]", conf.Paths("image-json"))
 
 	type carrier struct {
 		item  wpimage.ImageData

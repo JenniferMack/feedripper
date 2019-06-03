@@ -61,7 +61,7 @@ func doAction(a string, c wputil.Config) error {
 		out, e = doFilter(list, c, wr)
 
 	case "verify":
-		out, e = doVerify(list, c)
+		out, e = doVerify(list, c, wr)
 
 	case "fetch":
 		out, e = doFetch(list, c, wr)

@@ -2,13 +2,17 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"log"
 
 	"repo.local/wputil"
 	"repo.local/wputil/wpimage"
 )
 
-func doVerify(list wpimage.ImageList, conf wputil.Config) ([]byte, error) {
+func doVerify(list wpimage.ImageList, conf wputil.Config, wr io.Writer) ([]byte, error) {
+	log.SetOutput(wr)
+	log.SetPrefix("[  verify] ")
+
 	log.Printf("> verifying image URLs [%s]", conf.Paths("image-json"))
 
 	ch := make(chan wpimage.ImageData, 10)
