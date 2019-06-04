@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"repo.local/wputil/wpfeed"
 	"repo.local/wputil/wpimage"
 )
 
@@ -20,7 +21,11 @@ func TestDoFetch404(t *testing.T) {
 		},
 	}
 
-	b, e := doFetch(list, "filepath.json", "dirpath", &buf)
+	fi := make(wpfeed.Paths)
+	fi["one"] = "filepath.json"
+	fi["two"] = "dirpath"
+
+	b, e := doFetch(list, fi, &buf)
 	if b == nil {
 		t.Error(b)
 	}
@@ -47,7 +52,11 @@ func TestDoFetchImg(t *testing.T) {
 		},
 	}
 
-	b, e := doFetch(list, "filepath.json", "dirpath", &buf)
+	fi := make(wpfeed.Paths)
+	fi["one"] = "filepath.json"
+	fi["two"] = "dirpath"
+
+	b, e := doFetch(list, fi, &buf)
 	if b == nil {
 		t.Error(b)
 	}

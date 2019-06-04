@@ -35,12 +35,12 @@ func (i ImageList) CheckStatus(ch chan ImageData, verb bool, img404 string) {
 			n, err := d.CheckImageStatus(img404)
 			if verb {
 				if err != nil {
-					log.Printf("[  error] %s", d.Err)
+					log.Printf("[> error] %s", d.Err)
 				}
 				if n == 1 {
-					log.Printf("[checked] %d: %s", d.Resp, wputil.Trim(65, d.Path))
+					log.Printf("[checked] %d: %s", d.Resp, wputil.TrimLeft(65, d.Path))
 				} else {
-					log.Printf("[skipped] on disk: %s", wputil.Trim(65, d.LocalPath))
+					log.Printf("[skipped] %s", wputil.TrimLeft(65, d.LocalPath))
 				}
 			}
 			ch <- d

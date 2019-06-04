@@ -7,10 +7,26 @@ import (
 )
 
 func TestILParse(t *testing.T) {
-	il := ImageData{}
-	il.ParseImageURL("http://photobin.com/img/colür/foo.png?width=500&dpi=300")
+	il := ImageData{Rawpath: "http://photobin.com/img/colür/foo.png?width=500&dpi=300", UseTLS: true}
+	il.ParseImageURL("foo", "bar", "baz")
 	if il.Path != "https://photobin.com/img/col%C3%BCr/foo.png" {
-		t.Error(il)
+		t.Error(il.Path)
+	}
+}
+
+func TestYuT(t *testing.T) {
+	// <img src="https://img.youtube.com/vi/sDOo5nDJwgA/default.jpg"/>
+	d := ImageData{
+		Rawpath:   "https://img.youtube.com/vi/sDOo5nDJwgA/default.jpg",
+		Path:      "",
+		LocalPath: "",
+	}
+	d.ParseImageURL("foo", "images", "images/404.jpg")
+	if d.LocalPath != "images/sDOo5nDJwgA-default.jpg" {
+		t.Error(d.LocalPath)
+	}
+	if d.Path != "https://img.youtube.com/vi/sDOo5nDJwgA/default.jpg" {
+		t.Error(d.Path)
 	}
 }
 
@@ -62,7 +78,7 @@ func TestUnmar(t *testing.T) {
 		}
 		cnt1 := b.Merge(a)
 		cnt2 := b.Merge(a)
-		if cnt1 != 6 || cnt1 != cnt2 {
+		if len(cnt1) != 6 || len(cnt1) != len(cnt2) {
 			t.Error(cnt1, len(a))
 			t.Error(cnt2, len(b))
 		}

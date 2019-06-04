@@ -14,39 +14,26 @@ type items []Item
 
 // Sort interface
 
-func (i items) Len() int {
-	return len(i)
-}
-
-func (i items) Less(j, k int) bool {
-	return i[j].PubDate.Before(i[k].PubDate.Time)
-}
-
-func (i items) Swap(j, k int) {
-	i[j], i[k] = i[k], i[j]
-}
+func (i items) Len() int           { return len(i) }
+func (i items) Less(j, k int) bool { return i[j].PubDate.Before(i[k].PubDate.Time) }
+func (i items) Swap(j, k int)      { i[j], i[k] = i[k], i[j] }
 
 type Feed struct {
+	Name  string `json:"name"`
+	URL   string `json:"url"`
 	items items
 	json  []byte
 	index int
 }
 
-// List returns a slice of Items in the Feed.
-func (f Feed) List() []Item {
-	return f.items
-}
+// List returns a slice of Items in the feed.
+func (f Feed) List() []Item { return f.items }
 
-// Reverse returns a reversed slice of Items in the Feed
-func (f Feed) Reverse() []Item {
-	sort.Sort(f.items)
-	return f.items
-}
+// Reverse returns a reversed slice of Items in the feed
+func (f Feed) Reverse() []Item { sort.Sort(f.items); return f.items }
 
-// Len returns the number of feed items.
-func (f Feed) Len() int {
-	return f.items.Len()
-}
+// Len returns the number of Feed items.
+func (f Feed) Len() int { return f.items.Len() }
 
 // // Append adds items without checking for duplicates or sorting.
 // func (f *Feed) Append(i Feed) {
@@ -194,7 +181,7 @@ func (f *Feed) reset() {
 	f.json = nil
 }
 
-// Reset resets the Feed to be empty,
+// Reset resets the feed to be empty,
 // but it retains the underlying storage for use by future writes.
 func (f *Feed) Reset() {
 	f.reset()
