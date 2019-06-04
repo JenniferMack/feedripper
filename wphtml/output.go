@@ -3,16 +3,19 @@ package wphtml
 import (
 	"bytes"
 	"fmt"
-	"html"
 	"regexp"
 	"sort"
-	"strings"
 	"time"
 
-	"github.com/microcosm-cc/bluemonday"
-	"gopkg.in/russross/blackfriday.v2"
 	"repo.local/wputil"
 )
+
+type Post struct {
+	Title string
+	Date  string
+	Link  string
+	Body  string
+}
 
 type RegexList struct {
 	Pattern string
@@ -30,20 +33,48 @@ func (r RegexList) ReplaceAll(s string) string {
 
 func TaggedOutput(feed wputil.Feed, tags []wputil.Tag, sep string, reg []RegexList) ([]byte, error) {
 	f := makeTaggedList(feed.List(), tags)
+	htm := bytes.Buffer{}
 
-	html := bytes.Buffer{}
 	for _, t := range tags {
 		if f[t.Name].Len() == 0 {
 			continue
 		}
 
-		html.Write(makeHeader(t.Name))
-		for _, i := range f[t.Name].List() {
-			html.Write(makePost(i, reg))
-			fmt.Fprintf(&html, "\n%s\n\n", sep)
+		posts := formatPosts(f[t.Name].List(), reg)
+		fmt.Fprintf(&htm, `<h1 class="section-header">%s</h1>`, t.Name)
+
+		for _, p := range posts {
+			fmt.Fprintf(&htm, `
+
+<h2 class="item-title">
+  <a href="%s">
+  %s
+  </a>
+</h2>
+
+<div class="body-text">
+<!-- pubDate: %s -->
+%s</div>
+
+%s
+`, p.Link, p.Title, p.Date, p.Body, sep)
 		}
 	}
-	return html.Bytes(), nil
+	return htm.Bytes(), nil
+}
+
+func formatPosts(items []wputil.Item, re []RegexList) []Post {
+	list := []Post{}
+	for _, v := range items {
+		post := Post{
+			Title: smartenString(v.Title),
+			Link:  v.Link,
+			Date:  v.PubDate.Format(time.RFC3339),
+			Body:  cleanHTML(v.Body.Text, re),
+		}
+		list = append(list, post)
+	}
+	return list
 }
 
 func makeTaggedList(items []wputil.Item, tags wputil.Tags) map[string]wputil.Feed {
@@ -74,76 +105,4 @@ func makeTaggedList(items []wputil.Item, tags wputil.Tags) map[string]wputil.Fee
 		out[k] = t
 	}
 	return out
-}
-
-func makeHeader(h string) []byte {
-	s := fmt.Sprintf(`<h1 class="section-header">%s</h1>`+"\n", smartenString(h))
-	return []byte(s)
-}
-
-func makePost(i wputil.Item, re []RegexList) []byte {
-	h := html.UnescapeString(i.Body.Text)
-	for _, r := range re {
-		h = r.ReplaceAll(h)
-	}
-
-	clean := sanitize(h)
-	clean = makeHTML(clean)
-
-	s := fmt.Sprintf(`
-<h2 class="item-title">
-  <a href="%s">%s</a>
-</h2>
-<!-- pubDate: %s -->
-
-<div class="body-text">
-%s
-</div>
-`, i.Link, smartenString(i.Title), i.PubDate.Format(time.RFC3339), clean)
-	return []byte(s)
-}
-
-func smartenString(s string) string {
-	re := strings.NewReplacer(
-		`“`, `"`,
-		`”`, `"`,
-		`‘`, `'`,
-		`’`, `'`,
-	)
-	s = re.Replace(s)
-	sp := blackfriday.NewSmartypantsRenderer(
-		blackfriday.Smartypants |
-			blackfriday.SmartypantsDashes |
-			blackfriday.SmartypantsLatexDashes,
-	)
-
-	out := bytes.Buffer{}
-	sp.Process(&out, []byte(s))
-
-	return out.String()
-}
-
-func makeHTML(s string) string {
-	bf := blackfriday.Run([]byte(s), blackfriday.WithRenderer(
-		blackfriday.NewHTMLRenderer(
-			blackfriday.HTMLRendererParameters{
-				Flags: blackfriday.UseXHTML |
-					blackfriday.Smartypants |
-					blackfriday.SmartypantsDashes |
-					blackfriday.SmartypantsLatexDashes,
-			},
-		),
-	))
-	return string(bf)
-}
-
-func sanitize(h string) string {
-	bm := bluemonday.NewPolicy()
-	bm.AllowAttrs("href", "title").OnElements("a")
-	bm.AllowAttrs("src").OnElements("img")
-	bm.AllowElements("ul", "ol", "li", "br", "p", "em",
-		"h1", "h2", "h3", "h4", "h5", "h6",
-		"blockquote", "strong", "figure", "figcaption")
-
-	return bm.Sanitize(h)
 }
