@@ -2,14 +2,19 @@ package wphtml
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"sort"
+	"text/template"
 	"time"
 
 	"repo.local/wputil"
 )
 
+type PostList struct {
+	Header string
+	Sep    string
+	Posts  []Post
+}
 type Post struct {
 	Title string
 	Date  string
@@ -31,6 +36,23 @@ func (r RegexList) ReplaceAll(s string) string {
 	return r.re.ReplaceAllString(s, r.Replace)
 }
 
+const tagged_out = `<h1 class="section-header">{{.Header}}</h1>
+
+{{range .Posts}}
+<h2 class="item-title">
+  <a href="{{.Link}}">
+   {{.Title}}
+  </a>
+</h2>
+
+<div class="body-text">
+<!-- pubDate: {{.Date}} -->
+{{.Body -}}
+</div>
+
+{{$.Sep}}
+{{end}}`
+
 func TaggedOutput(feed wputil.Feed, tags []wputil.Tag, sep string, reg []RegexList) ([]byte, error) {
 	f := makeTaggedList(feed.List(), tags)
 	htm := bytes.Buffer{}
@@ -40,30 +62,18 @@ func TaggedOutput(feed wputil.Feed, tags []wputil.Tag, sep string, reg []RegexLi
 			continue
 		}
 
-		posts := formatPosts(f[t.Name].List(), reg)
-		fmt.Fprintf(&htm, `<h1 class="section-header">%s</h1>`, t.Name)
+		list := formatPosts(f[t.Name].List(), reg)
+		list.Sep = sep
+		tmpl := template.Must(template.New("post").Parse(tagged_out))
 
-		for _, p := range posts {
-			fmt.Fprintf(&htm, `
-
-<h2 class="item-title">
-  <a href="%s">
-  %s
-  </a>
-</h2>
-
-<div class="body-text">
-<!-- pubDate: %s -->
-%s</div>
-
-%s
-`, p.Link, p.Title, p.Date, p.Body, sep)
+		if err := tmpl.Execute(&htm, list); err != nil {
+			return nil, err
 		}
 	}
 	return htm.Bytes(), nil
 }
 
-func formatPosts(items []wputil.Item, re []RegexList) []Post {
+func formatPosts(items []wputil.Item, re []RegexList) PostList {
 	list := []Post{}
 	for _, v := range items {
 		post := Post{
@@ -74,7 +84,7 @@ func formatPosts(items []wputil.Item, re []RegexList) []Post {
 		}
 		list = append(list, post)
 	}
-	return list
+	return PostList{Posts: list}
 }
 
 func makeTaggedList(items []wputil.Item, tags wputil.Tags) map[string]wputil.Feed {
