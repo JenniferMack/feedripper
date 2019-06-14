@@ -22,11 +22,8 @@ type (
 	}
 
 	feed struct {
-		Name  string `json:"name"`
-		URL   string `json:"url"`
-		items items
-		json  []byte
-		index int
+		Name string `json:"name"`
+		URL  string `json:"url"`
 	}
 
 	item struct {
