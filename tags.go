@@ -1,5 +1,16 @@
 package feedpub
 
+type (
+	tag struct {
+		Name     string `json:"name"`
+		Text     string `json:"text"`
+		Priority uint   `json:"priority"`
+		Limit    uint   `json:"limit"`
+	}
+
+	tags []tag
+)
+
 // sort tags by priority
 func (t tags) Len() int           { return len(t) }
 func (t tags) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
