@@ -1,0 +1,49 @@
+{
+  "name": "tester",
+  "number": "1",
+  "language": "en",
+  "deadline": "2019-12-31T18:00:00-05:00",
+  "days": -7,
+  "json_dir": "json",
+  "rss_dir": "xml",
+  "seq_name": "Issue",
+  "image_dir": "images",
+  "image_qual": 65,
+  "image_width": 450,
+  "image_404": "images/404.jpg",
+  "site_url": "http://example.org",
+  "separator": "<hr/>",
+  "tags": [
+    {
+      "priority": 0,
+      "limit": 20,
+      "text": "featured stories",
+      "name": "Featured Stories"
+    },
+    {
+      "priority": 2,
+      "limit": 0,
+      "text": "world",
+      "name": "World News"
+    },
+    {
+      "priority": 1,
+      "limit": 0,
+      "text": "us",
+      "name": "US News"
+    }
+  ],
+  "exclude": [
+    "health"
+  ],
+  "feeds": [
+    {
+      "name": "primary",
+      "url": "http://example.org/feed/"
+    },
+    {
+      "name": "backup",
+      "url": "http://example.org/backup/feed/"
+    }
+  ]
+}
