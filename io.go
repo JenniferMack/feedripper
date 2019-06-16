@@ -117,6 +117,7 @@ func sizeOf(b int) string {
 	}
 	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMG"[exp])
 }
+
 func mergeFeeds(conf Config, lg *log.Logger) items {
 	feed := items{}
 	n := 0

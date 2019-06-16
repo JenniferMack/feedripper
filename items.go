@@ -13,23 +13,26 @@ type (
 	items []item
 
 	item struct {
-		XMLName    xml.Name   `xml:"item" json:"-"`
-		Title      string     `xml:"title" json:"title"`
-		Link       string     `xml:"link" json:"link"`
-		PubDate    xmlTime    `xml:"pubDate" json:"pub_date"`
-		Categories []category `xml:"category" json:"categories"`
-		GUID       string     `xml:"guid" json:"guid"`
-		Body       body       `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
-	}
-
-	body struct {
-		XMLName xml.Name `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"-"`
-		Text    string   `xml:",cdata" json:"text"`
+		XMLName     xml.Name   `xml:"item" json:"-"`
+		Title       string     `xml:"title" json:"title"`
+		Link        string     `xml:"link" json:"link"`
+		PubDate     xmlTime    `xml:"pubDate" json:"pub_date"`
+		Categories  []category `xml:"category" json:"categories"`
+		GUID        string     `xml:"guid" json:"guid"`
+		Description string     `xml:"description" json:"description"`
+		Images      []image    `xml:"-" json:"images"`
+		Body        string     `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
 	}
 
 	category struct {
 		XMLName xml.Name `xml:"category" json:"-"`
 		Name    string   `xml:",cdata" json:"name"`
+	}
+
+	image struct {
+		URL       string `json:"url"`
+		LocalPath string `json:"local_path"`
+		OnDisk    bool   `json:"on_disk"`
 	}
 
 	xmlTime struct {
@@ -114,7 +117,7 @@ func (i *items) add(list ...item) {
 	*i = ii
 }
 
-func WriteItemList(conf Config, lg *log.Logger) error {
+func WriteItemList(conf Config, pp bool, lg *log.Logger) error {
 	lg.SetPrefix("[merging ] ")
 	list := mergeFeeds(conf, lg)
 
@@ -131,7 +134,7 @@ func WriteItemList(conf Config, lg *log.Logger) error {
 	sort.Sort(list)
 
 	name := conf.Names("json")
-	n, err := writeJSON(list, name, false)
+	n, err := writeJSON(list, name, pp)
 	if err != nil {
 		return fmt.Errorf("write json: %s", err)
 	}
