@@ -121,6 +121,7 @@ func WriteItemList(conf Config, lg *log.Logger) error {
 	n := len(list)
 	list.trim(conf)
 	lg.Printf("[%03d] items outside of date range", n-len(list))
+	lg.Printf("[%03d] items within date range", len(list))
 
 	list.include(conf)
 	lg.Printf("[%03d] items included by tags", len(list))
