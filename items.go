@@ -2,6 +2,10 @@ package feedpub
 
 import (
 	"encoding/xml"
+	"fmt"
+	"log"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -33,6 +37,15 @@ type (
 	}
 )
 
+func (i item) hasTag(t string) bool {
+	for _, v := range i.Categories {
+		if strings.EqualFold(v.Name, t) {
+			return true
+		}
+	}
+	return false
+}
+
 // sort items by date
 func (i items) Len() int           { return len(i) }
 func (i items) Swap(j, k int)      { i[j], i[k] = i[k], i[j] }
@@ -48,7 +61,37 @@ func (i *items) trim(conf Config) {
 	*i = it
 }
 
-func (i *items) add(list items) {
+func (i *items) exclude(conf Config) int {
+	it := items{}
+	cnt := 0
+
+	for _, itm := range *i {
+		for _, exc := range conf.Exclude {
+			if !itm.hasTag(exc) {
+				it.add(itm)
+			} else {
+				cnt++
+			}
+		}
+	}
+
+	*i = it
+	return cnt
+}
+
+func (i *items) include(conf Config) {
+	it := items{}
+	for _, itm := range *i {
+		for _, tg := range conf.Tags {
+			if itm.hasTag(tg.Text) {
+				it.add(itm)
+			}
+		}
+	}
+	*i = it
+}
+
+func (i *items) add(list ...item) {
 	it := append(*i, list...)
 	dup := make(map[string]item)
 
@@ -69,6 +112,31 @@ func (i *items) add(list items) {
 		ii = append(ii, v)
 	}
 	*i = ii
+}
+
+func WriteItemList(conf Config, lg *log.Logger) error {
+	lg.SetPrefix("[merging ] ")
+	list := mergeFeeds(conf, lg)
+
+	n := len(list)
+	list.trim(conf)
+	lg.Printf("[%03d] items outside of date range", n-len(list))
+
+	list.include(conf)
+	lg.Printf("[%03d] items included by tags", len(list))
+
+	n = list.exclude(conf)
+	lg.Printf("[%03d] items excluded by tags", n)
+	sort.Sort(list)
+
+	name := conf.Names("json")
+	n, err := writeJSON(list, name, false)
+	if err != nil {
+		return fmt.Errorf("write json: %s", err)
+	}
+
+	lg.Printf("[%03d/%s] => %s", len(list), sizeOf(n), name)
+	return nil
 }
 
 func (t *xmlTime) UnmarshalXML(d *xml.Decoder, s xml.StartElement) error {
