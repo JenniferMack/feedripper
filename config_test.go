@@ -1,13 +1,20 @@
-package feedpub_test
+package feedpub
 
 import (
-	"feedpub"
 	"testing"
 	"time"
 )
 
+func TestFeedPath(t *testing.T) {
+	c := Config{JSONDir: "json"}
+	p := c.feedPath("foo", "json")
+	if p != "json/foo.json" {
+		t.Error(p)
+	}
+}
+
 func TestConfig(t *testing.T) {
-	c, e := feedpub.ReadConfig("fixtures/config.json")
+	c, e := ReadConfig("fixtures/config.json")
 	if e != nil {
 		t.Fatal(e)
 	}

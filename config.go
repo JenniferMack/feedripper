@@ -2,6 +2,7 @@ package feedpub
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 )
 
@@ -26,6 +27,11 @@ type (
 		Exclude    []string  `json:"exclude"`
 		Feeds      []feed    `json:"feeds"`
 	}
+
+	feed struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	}
 )
 
 func (c Config) Names(path string) string {
@@ -48,10 +54,17 @@ func (c Config) Names(path string) string {
 		return c.ImageDir
 	case "dir-rss":
 		return c.RSSDir
+	case "dir-xml":
+		return c.RSSDir
 	case "dir-json":
 		return c.JSONDir
 	}
 	return ""
+}
+
+func (c Config) feedPath(name, typ string) string {
+	n := fmt.Sprintf("%s.%s", name, typ)
+	return filepath.Join(c.Names("dir-"+typ), n)
 }
 
 func (c Config) DateRange() string {
@@ -70,4 +83,17 @@ func (c Config) DateRange() string {
 		strFmt = "02 Jan 2006"
 	}
 	return fmt.Sprintf("%s–%s", str.Format(strFmt), end.Format("02 Jan 2006"))
+}
+
+func (c Config) inRange(itm item) bool {
+	str := c.Deadline
+	end := c.Deadline.AddDate(0, 0, c.Days)
+	if c.Days < 0 {
+		str, end = end, str
+	}
+
+	if itm.PubDate.After(str) && itm.PubDate.Before(end) {
+		return true
+	}
+	return false
 }
