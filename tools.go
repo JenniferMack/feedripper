@@ -19,7 +19,7 @@ func Titles(conf Config, path string) error {
 	}
 
 	for k, v := range feed {
-		fmt.Printf("%02d [%s] %.60s\n", k+1, v.PubDate.Format("0102|15:16"), v.Title)
+		fmt.Printf("%02d. [%s] %.60s\n", k+1, v.PubDate.Format("0102|15:16"), v.Title)
 	}
 	return nil
 }
