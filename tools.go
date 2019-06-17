@@ -30,8 +30,8 @@ func Titles(conf Config, path string) error {
 	return nil
 }
 
-func Recover(conf Config, pp bool, lg *log.Logger) error {
-	lg.SetPrefix("[recover ] ")
+func BuildFeeds(conf Config, pp bool, lg *log.Logger) error {
+	lg.SetPrefix("[building] ")
 	errCh := make(chan error)
 	wg := sync.WaitGroup{}
 
@@ -48,6 +48,7 @@ func Recover(conf Config, pp bool, lg *log.Logger) error {
 			}
 
 			itms := items{}
+			lg.Printf("[%03d] archives <= %s", len(gl), ff.Name)
 			for _, v := range gl {
 				fi, err := os.Open(v)
 				if err != nil {
@@ -72,14 +73,14 @@ func Recover(conf Config, pp bool, lg *log.Logger) error {
 			}
 
 			sort.Sort(itms)
-			out := ff.Name + `_recover.json`
+			out := conf.feedPath(ff.Name, "json")
 			n, err := writeJSON(itms, out, pp)
 			if err != nil {
 				errCh <- err
 				return
 			}
 
-			lg.Printf("[%03d/%s] => %s", len(itms), sizeOf(n), out)
+			lg.Printf("[%03d/%s] items => %s", len(itms), sizeOf(n), out)
 		}(fd)
 	}
 	go func() { wg.Wait(); close(errCh) }()

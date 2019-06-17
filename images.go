@@ -14,7 +14,7 @@ import (
 
 func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 	lg.SetPrefix("[images  ] ")
-	itms, _ := oldItems(conf.Names("json"))
+	itms, _ := readItems(conf.Names("json"))
 	cnt, ondi := 0, 0
 
 	for k, v := range itms {

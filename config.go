@@ -52,9 +52,7 @@ func (c Config) Names(path string) string {
 		return c.Image404
 	case "dir-images":
 		return c.ImageDir
-	case "dir-rss":
-		return c.RSSDir
-	case "dir-xml":
+	case "dir-rss", "dir-xml":
 		return c.RSSDir
 	case "dir-json":
 		return c.JSONDir

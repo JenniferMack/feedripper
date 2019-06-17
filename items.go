@@ -54,7 +54,7 @@ func (i items) Len() int           { return len(i) }
 func (i items) Swap(j, k int)      { i[j], i[k] = i[k], i[j] }
 func (i items) Less(j, k int) bool { return i[j].PubDate.Before(i[k].PubDate.Time) }
 
-func (i *items) trim(conf Config) {
+func (i *items) trimByDate(conf Config) {
 	it := items{}
 	for _, v := range *i {
 		if conf.inRange(v) {
@@ -117,12 +117,26 @@ func (i *items) add(list ...item) {
 	*i = ii
 }
 
+func mergeFeeds(conf Config, lg *log.Logger) items {
+	feed := items{}
+	n := 0
+
+	for _, v := range conf.Feeds {
+		path := conf.feedPath(v.Name, "json")
+		itms, _ := readItems(path)
+		n += len(itms)
+		lg.Printf("[%03d/%03d] total/items <= %s", n, len(itms), path)
+		feed.add(itms...)
+	}
+	return feed
+}
+
 func WriteItemList(conf Config, pp bool, lg *log.Logger) error {
 	lg.SetPrefix("[merging ] ")
 	list := mergeFeeds(conf, lg)
 
 	n := len(list)
-	list.trim(conf)
+	list.trimByDate(conf)
 	lg.Printf("[%03d] items outside of date range", n-len(list))
 	lg.Printf("[%03d] items within date range", len(list))
 

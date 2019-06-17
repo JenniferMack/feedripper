@@ -3,7 +3,6 @@ package feedpub
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -31,8 +30,8 @@ func ReadConfig(file string) (*Config, error) {
 	return &c, nil
 }
 
-func FetchFeeds(conf Config, l *log.Logger) error {
-	l.SetPrefix("[fetching] ")
+func FetchFeeds(conf Config, lg *log.Logger) error {
+	lg.SetPrefix("[fetching] ")
 	wg := sync.WaitGroup{}
 	errCh := make(chan error)
 	clock := time.Now()
@@ -41,7 +40,7 @@ func FetchFeeds(conf Config, l *log.Logger) error {
 		wg.Add(1)
 		go func(v feed) {
 			defer wg.Done()
-			l.Printf("feed: %s", v.URL)
+			lg.Printf("feed: %s", v.URL)
 			b, err := FetchItem(v.URL, "xml")
 			if err != nil {
 				errCh <- fmt.Errorf("feed %s: %s", v.Name, err)
@@ -56,28 +55,7 @@ func FetchFeeds(conf Config, l *log.Logger) error {
 				errCh <- fmt.Errorf("write xml: %s", err)
 				return
 			}
-			l.Printf("save: %s", loc)
-
-			// json
-			x := rss{}
-			err = xml.Unmarshal(b, &x)
-			if err != nil {
-				errCh <- fmt.Errorf("decode xml: %s", err)
-				return
-			}
-
-			// merge json
-			loc = conf.feedPath(v.Name, "json")
-			oi, n := oldItems(loc)
-			l.Printf("read: [%03d/%s] items <= %s", len(oi), sizeOf(n), loc)
-			oi.add(x.Channel.Items...)
-
-			n, err = writeJSON(oi, loc, false)
-			if err != nil {
-				errCh <- fmt.Errorf("write json: %s", err)
-				return
-			}
-			l.Printf("save: [%03d/%s] items => %s", len(oi), sizeOf(n), loc)
+			lg.Printf("save: %s", loc)
 		}(v)
 	}
 	go func() {
@@ -88,18 +66,15 @@ func FetchFeeds(conf Config, l *log.Logger) error {
 	errcnt := 0
 	for e := range errCh {
 		errcnt++
-		l.Printf("[error] %.80s", e)
+		lg.SetPrefix("[   error] ")
+		lg.Printf("%.85s", e)
 	}
 
-	l.Printf("[%03d] feeds fetched in %s, %d errors", len(conf.Feeds),
+	lg.Printf("[%03d] feeds fetched in %s, %d errors", len(conf.Feeds),
 		time.Since(clock).Round(time.Millisecond), errcnt)
 
 	if errcnt > 0 {
-		plural := "s"
-		if errcnt == 1 {
-			plural = ""
-		}
-		return fmt.Errorf("%d error%s, check the log", errcnt, plural)
+		return fmt.Errorf("%d errors, check the log", errcnt)
 	}
 	return nil
 }
@@ -116,19 +91,6 @@ func sizeOf(b int) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMG"[exp])
-}
-
-func mergeFeeds(conf Config, lg *log.Logger) items {
-	feed := items{}
-	n := 0
-	for _, v := range conf.Feeds {
-		path := conf.feedPath(v.Name, "json")
-		oi, _ := oldItems(path)
-		n += len(oi)
-		lg.Printf("[%03d/%03d] total / items from %s", n, len(oi), path)
-		feed.add(oi...)
-	}
-	return feed
 }
 
 func writeJSON(obj interface{}, path string, pretty bool) (int, error) {
@@ -151,7 +113,7 @@ func writeJSON(obj interface{}, path string, pretty bool) (int, error) {
 	return buf.Len(), nil
 }
 
-func oldItems(p string) (items, int) {
+func readItems(p string) (items, int) {
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		return items{}, 0
