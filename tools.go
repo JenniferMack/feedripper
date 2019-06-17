@@ -2,8 +2,14 @@ package feedpub
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"sort"
+	"sync"
 )
 
 func Titles(conf Config, path string) error {
@@ -20,6 +26,73 @@ func Titles(conf Config, path string) error {
 
 	for k, v := range feed {
 		fmt.Printf("%02d. [%s] %.60s\n", k+1, v.PubDate.Format("0102|15:16"), v.Title)
+	}
+	return nil
+}
+
+func Recover(conf Config, pp bool, lg *log.Logger) error {
+	lg.SetPrefix("[recover ] ")
+	errCh := make(chan error)
+	wg := sync.WaitGroup{}
+
+	for _, fd := range conf.Feeds {
+		wg.Add(1)
+		go func(ff feed) {
+			defer wg.Done()
+
+			path := filepath.Join(conf.Names("dir-rss"), ff.Name)
+			gl, err := filepath.Glob(path + `_*.xml`)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			itms := items{}
+			for _, v := range gl {
+				fi, err := os.Open(v)
+				if err != nil {
+					errCh <- err
+					return
+				}
+				defer fi.Close()
+
+				rss := rss{}
+				err = xml.NewDecoder(fi).Decode(&rss)
+				if err != nil {
+					errCh <- err
+					return
+				}
+
+				itms.add(rss.Channel.Items...)
+			}
+
+			if len(itms) == 0 {
+				errCh <- fmt.Errorf("no items found")
+				return
+			}
+
+			sort.Sort(itms)
+			out := ff.Name + `_recover.json`
+			n, err := writeJSON(itms, out, pp)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			lg.Printf("[%03d/%s] => %s", len(itms), sizeOf(n), out)
+		}(fd)
+	}
+	go func() { wg.Wait(); close(errCh) }()
+
+	errcnt := 0
+	for v := range errCh {
+		lg.SetPrefix("[   error] ")
+		lg.Printf("%s", v)
+		errcnt++
+	}
+
+	if errcnt > 0 {
+		return fmt.Errorf("%d errors during recovery", errcnt)
 	}
 	return nil
 }
