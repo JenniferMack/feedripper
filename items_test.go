@@ -17,7 +17,7 @@ func TestAdd(t *testing.T) {
 		{GUID: "1", PubDate: xmlTime{tm.Add(1 * time.Hour)}},
 		{GUID: "3", PubDate: xmlTime{tm.Add(3 * time.Hour)}},
 	}
-	list.add(list)
+	list.add(list...)
 	if len(list) != 5 {
 		t.Error(len(list))
 	}

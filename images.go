@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/net/html"
 )
 
 func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
+	lg.SetPrefix("[images  ] ")
 	itms, _ := oldItems(conf.Names("json"))
-	cnt := 0
+	cnt, ondi := 0, 0
 
 	for k, v := range itms {
 		u := []string{}
@@ -30,16 +34,21 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 				continue
 			}
 			lp := makeLocPath(i)
+			od := isOnDisk(conf.Names("dir-images"), lp)
+			if od {
+				ondi++
+			}
+
 			itms[k].Images = append(itms[k].Images, image{
 				URL:       i,
 				LocalPath: lp,
-				OnDisk:    isOnDisk(lp),
+				OnDisk:    od,
 			})
 			cnt++
 		}
 	}
 
-	lg.Printf("[%03d] images => %s", cnt, conf.Names("json"))
+	lg.Printf("[%03d/%03d] images => %s", ondi, cnt, conf.Names("json"))
 
 	_, err := writeJSON(itms, conf.Names("json"), pp)
 	if err != nil {
@@ -49,10 +58,17 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 }
 
 func makeLocPath(p string) string {
-	return p
+	pth := path.Base(p)
+	ext := path.Ext(pth)
+	pth = strings.TrimSuffix(pth, ext)
+	return pth + ".jpg"
 }
 
-func isOnDisk(p string) bool {
+func isOnDisk(d, p string) bool {
+	pth := filepath.Join(d, p)
+	if _, err := os.Stat(pth); !os.IsNotExist(err) {
+		return true
+	}
 	return false
 }
 
