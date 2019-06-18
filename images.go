@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"golang.org/x/net/html"
 )
 
 func FetchImages(conf Config, loud bool, lg *log.Logger) error {
@@ -96,18 +98,15 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 	return nil
 }
 
-func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
+func ExtractImages(conf Config, pp bool, lg *log.Logger, fn ...func(*html.Node)) error {
 	lg.SetPrefix("[images  ] ")
 	itms, _ := readItems(conf.Names("json"))
 	cnt := 0
 
 	for k, v := range itms {
 		u := []string{}
-		str, err := Parse(strings.NewReader(v.Body),
-			DropElemIf("img", "src", "s.w.org"),
-			ConvertElemIf("iframe", "img", "src", "youtube.com"),
-			ExtractAttr("img", "src", &u),
-		)
+		fn = append(fn, ExtractAttr("img", "src", &u))
+		str, err := Parse(strings.NewReader(v.Body), fn...)
 		if err != nil {
 			return fmt.Errorf("html parse: %s", err)
 		}

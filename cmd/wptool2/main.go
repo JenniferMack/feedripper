@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
+	"strconv"
+	"strings"
+
+	"golang.org/x/net/html"
 )
 
 var (
@@ -94,7 +99,26 @@ func doImageCmd() error {
 	}
 
 	if *flagImageExt {
-		if err := feedpub.ExtractImages(*conf, *flagImagePretty, lg); err != nil {
+		if err := feedpub.ExtractImages(*conf, *flagImagePretty, lg,
+			func(n *html.Node) {
+				if n.Type == html.ElementNode && n.Data == "img" {
+					for _, v := range n.Attr {
+						if v.Key == "src" && strings.Contains(v.Val, "s.w.org") {
+							emo := path.Base(v.Val)
+							ext := path.Ext(emo)
+							emo = strings.ReplaceAll(strings.TrimSuffix(emo, ext), "-", "")
+							ucp, _ := strconv.ParseInt(emo, 16, 64)
+
+							n.Attr = nil
+							n.Type = html.TextNode
+							n.Data = string(ucp)
+							break
+						}
+					}
+				}
+			},
+			feedpub.ConvertElemIf("iframe", "img", "src", "youtube.com"),
+		); err != nil {
 			return err
 		}
 	}
