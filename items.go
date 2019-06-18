@@ -132,7 +132,7 @@ func mergeFeeds(conf Config, lg *log.Logger) items {
 	n := 0
 
 	for _, v := range conf.Feeds {
-		path := conf.feedPath(v.Name, "json")
+		path := conf.feedPath(v.Name, "", "json")
 		itms, _ := readItems(path)
 		n += len(itms)
 		lg.Printf("[%03d/%03d] total/items <= %s", n, len(itms), path)

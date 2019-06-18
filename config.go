@@ -60,8 +60,11 @@ func (c Config) Names(path string) string {
 	return ""
 }
 
-func (c Config) feedPath(name, typ string) string {
-	n := fmt.Sprintf("%s.%s", name, typ)
+func (c Config) feedPath(name, suf, typ string) string {
+	if suf != "" {
+		suf = `_` + suf
+	}
+	n := fmt.Sprintf("%s-%s%s.%s", name, c.Names("name"), suf, typ)
 	return filepath.Join(c.Names("dir-"+typ), n)
 }
 

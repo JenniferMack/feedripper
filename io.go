@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -48,8 +49,9 @@ func FetchFeeds(conf Config, lg *log.Logger) error {
 			}
 
 			// xml
-			name := fmt.Sprintf("%s_%d", v.Name, time.Now().Unix())
-			loc := conf.feedPath(name, "xml")
+			// name := fmt.Sprintf("%s-%s_%d", v.Name, conf.Names("name"), time.Now().Unix())
+			tm := strconv.FormatInt(time.Now().Unix(), 10)
+			loc := conf.feedPath(v.Name, tm, "xml")
 			err = ioutil.WriteFile(loc, b, 0644)
 			if err != nil {
 				errCh <- fmt.Errorf("write xml: %s", err)
