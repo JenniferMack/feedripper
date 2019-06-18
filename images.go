@@ -99,11 +99,12 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 	lg.SetPrefix("[images  ] ")
 	itms, _ := readItems(conf.Names("json"))
-	cnt, ondi := 0, 0
+	cnt := 0
 
 	for k, v := range itms {
 		u := []string{}
 		str, err := Parse(strings.NewReader(v.Body),
+			DropElemIf("img", "src", "s.w.org"),
 			ConvertElemIf("iframe", "img", "src", "youtube.com"),
 			ExtractAttr("img", "src", &u),
 		)
@@ -119,26 +120,24 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 			if err != nil {
 				return err
 			}
-			lp := makeLocPath(conf.Names("dir-images"), i)
-			if isOnDisk(lp) {
-				ondi++
-			}
+			lp := makeLocPath(conf.Names("dir-images"), fp)
 
 			it = append(it, feedimage{
 				URL:       fp,
 				LocalPath: lp,
+				RawPath:   i,
 			})
 			cnt++
 		}
 		itms[k].Images = it
 	}
 
-	lg.Printf("[%03d/%03d] images => %s", ondi, cnt, conf.Names("json"))
-
-	_, err := writeJSON(itms, conf.Names("json"), pp)
+	n, err := writeJSON(itms, conf.Names("json"), pp)
 	if err != nil {
 		return fmt.Errorf("json write: %s", err)
 	}
+
+	lg.Printf("[%03d/%s] images => %s", cnt, sizeOf(n), conf.Names("json"))
 	return nil
 }
 
