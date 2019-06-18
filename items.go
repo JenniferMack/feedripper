@@ -32,6 +32,7 @@ type (
 	feedimage struct {
 		URL       string `json:"url"`
 		LocalPath string `json:"local_path"`
+		RawPath   string `json:"raw_path"`
 	}
 
 	xmlTime struct {
@@ -152,7 +153,7 @@ func WriteItemList(conf Config, pp bool, lg *log.Logger) error {
 		return fmt.Errorf("write json: %s", err)
 	}
 
-	lg.Printf("[%03d/%s] => %s", len(list), sizeOf(n), name)
+	lg.Printf("[%03d/%s] items  => %s", len(list), sizeOf(n), name)
 	return nil
 }
 
