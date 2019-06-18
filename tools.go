@@ -33,27 +33,33 @@ func Titles(conf Config, out io.Writer) error {
 
 func BuildFeeds(conf Config, pp bool, lg *log.Logger) error {
 	lg.SetPrefix("[building] ")
-	errCh := make(chan error)
+	type commCh struct {
+		items items
+		path  string
+		err   error
+	}
+	ch := make(chan commCh)
 	wg := sync.WaitGroup{}
 
 	for _, fd := range conf.Feeds {
 		wg.Add(1)
 		go func(ff feed) {
 			defer wg.Done()
+			ii := commCh{}
 
-			path := filepath.Join(conf.Names("dir-rss"), ff.Name)
-			gl, err := filepath.Glob(path + `_*.xml`)
+			gl, err := filepath.Glob(conf.feedPath(ff.Name, `*`, "xml"))
 			if err != nil {
-				errCh <- err
+				ii.err = err
+				ch <- ii
 				return
 			}
 
-			itms := items{}
 			lg.Printf("[%03d] archives <= %s", len(gl), ff.Name)
 			for _, v := range gl {
 				fi, err := os.Open(v)
 				if err != nil {
-					errCh <- err
+					ii.err = err
+					ch <- ii
 					return
 				}
 				defer fi.Close()
@@ -61,40 +67,45 @@ func BuildFeeds(conf Config, pp bool, lg *log.Logger) error {
 				rss := rss{}
 				err = xml.NewDecoder(fi).Decode(&rss)
 				if err != nil {
-					errCh <- err
+					ii.err = err
+					ch <- ii
 					return
 				}
 
-				itms.add(rss.Channel.Items...)
+				ii.items.add(rss.Channel.Items...)
 			}
 
-			if len(itms) == 0 {
-				errCh <- fmt.Errorf("no items found")
+			if len(ii.items) == 0 {
+				ii.err = fmt.Errorf("no items found")
+				ch <- ii
 				return
 			}
 
-			sort.Sort(itms)
-			out := conf.feedPath(ff.Name, "json")
-			n, err := writeJSON(itms, out, pp)
-			if err != nil {
-				errCh <- err
-				return
-			}
-
-			lg.Printf("[%03d/%s] items => %s", len(itms), sizeOf(n), out)
+			sort.Sort(ii.items)
+			ii.path = conf.feedPath(ff.Name, "", "json")
+			ch <- ii
 		}(fd)
 	}
-	go func() { wg.Wait(); close(errCh) }()
+	go func() { wg.Wait(); close(ch) }()
 
 	errcnt := 0
-	for v := range errCh {
-		lg.SetPrefix("[   error] ")
-		lg.Printf("%s", v)
-		errcnt++
+	for v := range ch {
+		if v.err != nil {
+			lg.Printf("[error] %s", v.err)
+			errcnt++
+			continue
+		}
+		n, err := writeJSON(v.items, v.path, pp)
+		if err != nil {
+			lg.Printf("[error] %s", v.err)
+			errcnt++
+			continue
+		}
+		lg.Printf("[%03d/%s] items => %s", len(v.items), sizeOf(n), v.path)
 	}
 
 	if errcnt > 0 {
-		return fmt.Errorf("%d errors during recovery", errcnt)
+		return fmt.Errorf("%d errors during building", errcnt)
 	}
 	return nil
 }
