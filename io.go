@@ -130,9 +130,9 @@ func readItems(p string) (items, int) {
 func FetchItem(url, typ string) ([]byte, error) {
 	resp, err := http.Head(url)
 	if err != nil {
-		resp.Body.Close()
 		return nil, fmt.Errorf("http head: %s", err)
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
 		resp.Body.Close()
@@ -149,7 +149,6 @@ func FetchItem(url, typ string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("http get: %s", err)
 	}
-	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
