@@ -26,7 +26,7 @@ func Titles(conf Config, out io.Writer) error {
 	}
 
 	for k, v := range feed {
-		fmt.Fprintf(out, "%02d. [%s] %.60s\n", k+1, v.PubDate.Format("0102|15:04:05"), v.Title)
+		fmt.Fprintf(out, "%02d. [%s] %.59s\n", k+1, v.PubDate.Format("0102|15:04:05"), v.Title)
 	}
 	return nil
 }
