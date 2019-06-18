@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,8 +13,8 @@ import (
 	"sync"
 )
 
-func Titles(conf Config, path string) error {
-	b, err := ioutil.ReadFile(path)
+func Titles(conf Config, out io.Writer) error {
+	b, err := ioutil.ReadFile(conf.Names("json"))
 	if err != nil {
 		return err
 	}
@@ -25,7 +26,7 @@ func Titles(conf Config, path string) error {
 	}
 
 	for k, v := range feed {
-		fmt.Printf("%02d. [%s] %.60s\n", k+1, v.PubDate.Format("0102|15:16"), v.Title)
+		fmt.Fprintf(out, "%02d. [%s] %.60s\n", k+1, v.PubDate.Format("0102|15:04:05"), v.Title)
 	}
 	return nil
 }
