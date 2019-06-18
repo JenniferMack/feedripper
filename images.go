@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,9 +35,9 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 			defer wg.Done()
 			token <- struct{}{}
 
-			for k, v := range i.itm.Images {
+			for _, v := range i.itm.Images {
 				i.imgTot++
-				if v.OnDisk == true {
+				if isOnDisk(v.LocalPath) == true {
 					if loud {
 						lg.Printf("[%6s] %.80s", "skip", v.LocalPath)
 					}
@@ -64,7 +65,6 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 				if loud {
 					lg.Printf("[% 6s] %.80s", sizeOf(len(jb)), v.LocalPath)
 				}
-				i.itm.Images[k].OnDisk = true
 				i.imgNum++
 			}
 		}(comm{itm: v})
@@ -115,19 +115,18 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 		it := []feedimage{}
 
 		for _, i := range u {
-			if strings.Contains(i, "?") {
-				continue
+			fp, err := parseRawPath(conf, i)
+			if err != nil {
+				return err
 			}
 			lp := makeLocPath(conf.Names("dir-images"), i)
-			od := isOnDisk(lp)
-			if od {
+			if isOnDisk(lp) {
 				ondi++
 			}
 
 			it = append(it, feedimage{
-				URL:       i,
+				URL:       fp,
 				LocalPath: lp,
-				OnDisk:    od,
 			})
 			cnt++
 		}
@@ -143,12 +142,41 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 	return nil
 }
 
+func parseRawPath(conf Config, u string) (string, error) {
+	data, err := url.Parse(u)
+	if err != nil {
+		return "", err
+	}
+
+	if data.Host == "" {
+		data.Host = conf.SiteURL
+	}
+
+	if data.Scheme == "" {
+		data.Scheme = "http"
+	}
+
+	if conf.UseTLS && data.Scheme == "http" {
+		data.Scheme = "https"
+	}
+
+	data.RawQuery = ""
+	if data.Host == "www.youtube.com" {
+		data.Host = "img.youtube.com"
+		p := path.Base(data.Path)
+		data.Path = "/vi/" + p + "/default.jpg"
+	}
+	return data.String(), nil
+}
+
 func makeLocPath(d, p string) string {
 	pth := path.Base(p)
+	if strings.Contains(p, "img.youtube.com") {
+		pth = path.Base(path.Dir(p)) + "-" + pth
+	}
 	ext := path.Ext(pth)
-	pth = strings.TrimSuffix(pth, ext)
-	pth = filepath.Join(d, pth+".jpg")
-	return pth
+	pth = strings.TrimSuffix(pth, ext) + ".jpg"
+	return filepath.Join(d, pth)
 }
 
 func isOnDisk(p string) bool {

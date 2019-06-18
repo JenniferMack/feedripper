@@ -32,7 +32,6 @@ type (
 	feedimage struct {
 		URL       string `json:"url"`
 		LocalPath string `json:"local_path"`
-		OnDisk    bool   `json:"on_disk"`
 	}
 
 	xmlTime struct {
