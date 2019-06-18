@@ -2,15 +2,99 @@ package feedpub
 
 import (
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
-
-	"golang.org/x/net/html"
+	"sync"
 )
+
+func FetchImages(conf Config, loud bool, lg *log.Logger) error {
+	lg.SetPrefix("[images  ] ")
+	type comm struct {
+		itm    item
+		err    error
+		imgNum int
+		imgTot int
+	}
+	commCh := make(chan comm)
+	token := make(chan struct{}, 5)
+
+	wg := sync.WaitGroup{}
+	itms, _ := readItems(conf.Names("json"))
+
+	for _, v := range itms {
+		wg.Add(1)
+
+		go func(i comm) {
+			defer func() { commCh <- i; <-token }()
+			defer wg.Done()
+			token <- struct{}{}
+
+			for k, v := range i.itm.Images {
+				i.imgTot++
+				if v.OnDisk == true {
+					if loud {
+						lg.Printf("[%6s] %.80s", "skip", v.LocalPath)
+					}
+					continue
+				}
+
+				ib, err := FetchItem(v.URL, "image")
+				if err != nil {
+					i.err = err
+					return
+				}
+
+				jb, err := MakeJPEG(ib, conf.ImageQual, conf.ImageWidth)
+				if err != nil {
+					i.err = err
+					return
+				}
+
+				err = ioutil.WriteFile(v.LocalPath, jb, 0644)
+				if err != nil {
+					i.err = err
+					return
+				}
+
+				if loud {
+					lg.Printf("[% 6s] %.80s", sizeOf(len(jb)), v.LocalPath)
+				}
+				i.itm.Images[k].OnDisk = true
+				i.imgNum++
+			}
+		}(comm{itm: v})
+	}
+	go func() { wg.Wait(); close(commCh) }()
+
+	it := items{}
+	imgCnt, imgTot, errCnt := 0, 0, 0
+	for v := range commCh {
+		it = append(it, v.itm)
+		imgCnt += v.imgNum
+		imgTot += v.imgTot
+		if v.err != nil {
+			lg.Printf("[error] %s", v.err)
+			errCnt++
+		}
+	}
+
+	if len(it) != len(itms) {
+		return fmt.Errorf("item count mismatch %d/%d", len(it), len(itms))
+	}
+
+	sort.Sort(it)
+	lg.Printf("[%03d/%03d] images downloaded, %d errors", imgCnt, imgTot, errCnt)
+	_, err := writeJSON(it, conf.Names("json"), true)
+	if err != nil {
+		return fmt.Errorf("json write: %s", err)
+	}
+	return nil
+}
 
 func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 	lg.SetPrefix("[images  ] ")
@@ -28,24 +112,26 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 		}
 
 		itms[k].Body = str
+		it := []feedimage{}
 
 		for _, i := range u {
 			if strings.Contains(i, "?") {
 				continue
 			}
-			lp := makeLocPath(i)
-			od := isOnDisk(conf.Names("dir-images"), lp)
+			lp := makeLocPath(conf.Names("dir-images"), i)
+			od := isOnDisk(lp)
 			if od {
 				ondi++
 			}
 
-			itms[k].Images = append(itms[k].Images, image{
+			it = append(it, feedimage{
 				URL:       i,
 				LocalPath: lp,
 				OnDisk:    od,
 			})
 			cnt++
 		}
+		itms[k].Images = it
 	}
 
 	lg.Printf("[%03d/%03d] images => %s", ondi, cnt, conf.Names("json"))
@@ -57,159 +143,17 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger) error {
 	return nil
 }
 
-func makeLocPath(p string) string {
+func makeLocPath(d, p string) string {
 	pth := path.Base(p)
 	ext := path.Ext(pth)
 	pth = strings.TrimSuffix(pth, ext)
-	return pth + ".jpg"
+	pth = filepath.Join(d, pth+".jpg")
+	return pth
 }
 
-func isOnDisk(d, p string) bool {
-	pth := filepath.Join(d, p)
-	if _, err := os.Stat(pth); !os.IsNotExist(err) {
+func isOnDisk(p string) bool {
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
 		return true
 	}
 	return false
-}
-
-func Parse(h io.Reader, opts ...func(*html.Node)) (string, error) {
-	doc, err := html.Parse(h)
-	if err != nil {
-		return "", err
-	}
-
-	for _, opt := range opts {
-		parser(doc, opt)
-	}
-
-	ret := strings.Builder{}
-	html.Render(&ret, doc)
-
-	htm := strings.TrimPrefix(ret.String(), "<html><head></head><body>")
-	if htm != ret.String() {
-		htm = strings.TrimSuffix(htm, "</body></html>")
-	}
-	return htm, nil
-}
-
-func parser(n *html.Node, fn func(*html.Node)) {
-	fn(n)
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		parser(c, fn)
-	}
-}
-
-func isNode(n *html.Node, t html.NodeType, d string) bool {
-	return n.Type == t && n.Data == d
-}
-
-func newNode(t html.NodeType, d string) *html.Node {
-	n := &html.Node{
-		Type: t,
-		Data: d,
-	}
-	return n
-}
-
-func ExtractAttr(elem, attr string, arr *[]string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, elem) {
-			for _, v := range n.Attr {
-				if v.Key == attr {
-					*arr = append(*arr, v.Val)
-				}
-			}
-		}
-	}
-}
-
-func ReplaceAttr(elem, attr, old, repl string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, elem) {
-			for k, v := range n.Attr {
-				if v.Key == attr && v.Val == old {
-					n.Attr[k].Val = repl
-				}
-			}
-		}
-	}
-}
-
-func ReplaceElem(from, to string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, from) {
-			n.Data = to
-		}
-	}
-}
-
-func WrapElem(inner, outer string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, inner) {
-			nu := newNode(html.ElementNode, outer)
-			n.Parent.InsertBefore(nu, n)
-			n.Parent.RemoveChild(n)
-			nu.AppendChild(n)
-		}
-	}
-}
-
-func UnwrapElem(inner, outer string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, outer) {
-			if n.FirstChild != nil && isNode(n.FirstChild, html.ElementNode, inner) {
-				fc := n.FirstChild
-				n.RemoveChild(fc)
-				n.Parent.InsertBefore(fc, n)
-				n.Parent.RemoveChild(n)
-			}
-		}
-	}
-}
-
-func AddCaption(find, caption string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, "figure") {
-			if n.FirstChild != nil && isNode(n.FirstChild, html.ElementNode, "img") {
-
-				for _, v := range n.FirstChild.Attr {
-					if v.Key == "src" && strings.Contains(v.Val, find) {
-
-						nu := newNode(html.ElementNode, "figcaption")
-						nu.FirstChild = newNode(html.TextNode, caption)
-						n.AppendChild(nu)
-						break
-					}
-				}
-			}
-		}
-	}
-}
-
-func ConvertToLink(from, link string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, from) {
-			n.Data = "a"
-			for k, v := range n.Attr {
-				if v.Key == "src" {
-					n.Attr[k].Key = "href"
-					break
-				}
-			}
-			nu := newNode(html.TextNode, link)
-			n.AppendChild(nu)
-		}
-	}
-}
-
-func ConvertElemIf(from, to, attr, cond string) func(*html.Node) {
-	return func(n *html.Node) {
-		if isNode(n, html.ElementNode, from) {
-			for _, v := range n.Attr {
-				if v.Key == attr && strings.Contains(v.Val, cond) {
-					n.Data = to
-				}
-			}
-		}
-	}
 }

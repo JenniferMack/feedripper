@@ -13,15 +13,15 @@ type (
 	items []item
 
 	item struct {
-		XMLName     xml.Name   `xml:"item" json:"-"`
-		Title       string     `xml:"title" json:"title"`
-		Link        string     `xml:"link" json:"link"`
-		PubDate     xmlTime    `xml:"pubDate" json:"pub_date"`
-		Categories  []category `xml:"category" json:"categories"`
-		GUID        string     `xml:"guid" json:"guid"`
-		Description string     `xml:"description" json:"description"`
-		Images      []image    `xml:"-" json:"images"`
-		Body        string     `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
+		XMLName     xml.Name    `xml:"item" json:"-"`
+		Title       string      `xml:"title" json:"title"`
+		Link        string      `xml:"link" json:"link"`
+		PubDate     xmlTime     `xml:"pubDate" json:"pub_date"`
+		Categories  []category  `xml:"category" json:"categories"`
+		GUID        string      `xml:"guid" json:"guid"`
+		Description string      `xml:"description" json:"description"`
+		Images      []feedimage `xml:"-" json:"images"`
+		Body        string      `xml:"http://purl.org/rss/1.0/modules/content/ encoded" json:"body"`
 	}
 
 	category struct {
@@ -29,7 +29,7 @@ type (
 		Name    string   `xml:",cdata" json:"name"`
 	}
 
-	image struct {
+	feedimage struct {
 		URL       string `json:"url"`
 		LocalPath string `json:"local_path"`
 		OnDisk    bool   `json:"on_disk"`
