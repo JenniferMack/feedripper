@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 
@@ -18,12 +17,12 @@ import (
 func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 	lg.SetPrefix("[images  ] ")
 	type comm struct {
-		itm    item
+		imgs   []feedimage
 		err    error
 		imgNum int
 		imgTot int
 	}
-	commCh := make(chan comm)
+	ch := make(chan comm)
 	token := make(chan struct{}, 5)
 
 	wg := sync.WaitGroup{}
@@ -33,11 +32,11 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 		wg.Add(1)
 
 		go func(i comm) {
-			defer func() { commCh <- i; <-token }()
 			defer wg.Done()
+			defer func() { <-token }()
 			token <- struct{}{}
 
-			for _, v := range i.itm.Images {
+			for _, v := range i.imgs {
 				i.imgTot++
 				if isOnDisk(v.LocalPath) == true {
 					if loud {
@@ -49,18 +48,21 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 				ib, err := FetchItem(v.URL, "image")
 				if err != nil {
 					i.err = err
+					ch <- i
 					return
 				}
 
 				jb, err := MakeJPEG(ib, conf.ImageQual, conf.ImageWidth)
 				if err != nil {
 					i.err = err
+					ch <- i
 					return
 				}
 
 				err = ioutil.WriteFile(v.LocalPath, jb, 0644)
 				if err != nil {
 					i.err = err
+					ch <- i
 					return
 				}
 
@@ -69,32 +71,22 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 				}
 				i.imgNum++
 			}
-		}(comm{itm: v})
+			ch <- i
+		}(comm{imgs: v.Images})
 	}
-	go func() { wg.Wait(); close(commCh) }()
+	go func() { wg.Wait(); close(ch) }()
 
-	it := items{}
 	imgCnt, imgTot, errCnt := 0, 0, 0
-	for v := range commCh {
-		it = append(it, v.itm)
+	for v := range ch {
 		imgCnt += v.imgNum
 		imgTot += v.imgTot
+
 		if v.err != nil {
 			lg.Printf("[error] %s", v.err)
 			errCnt++
 		}
 	}
-
-	if len(it) != len(itms) {
-		return fmt.Errorf("item count mismatch %d/%d", len(it), len(itms))
-	}
-
-	sort.Sort(it)
 	lg.Printf("[%03d/%03d] images downloaded, %d errors", imgCnt, imgTot, errCnt)
-	_, err := writeJSON(it, conf.Names("json"), true)
-	if err != nil {
-		return fmt.Errorf("json write: %s", err)
-	}
 	return nil
 }
 
