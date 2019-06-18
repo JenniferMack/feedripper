@@ -46,6 +46,45 @@ func newNode(t html.NodeType, d string) *html.Node {
 	return n
 }
 
+func walkSiblingsIf(n *html.Node, attr, cond string) []*html.Node {
+	list := []*html.Node{}
+	for s := n.NextSibling; s != nil; s = s.NextSibling {
+		if s.Type == n.Type && s.Data == n.Data {
+			for _, v := range s.Attr {
+				if v.Key == attr && strings.Contains(v.Val, cond) {
+					list = append(list, s)
+				}
+			}
+		}
+	}
+	return list
+}
+
+func DropElem(elem string) func(*html.Node) {
+	return func(n *html.Node) {
+		if isNode(n, html.ElementNode, elem) {
+			n.Parent.RemoveChild(n)
+		}
+	}
+}
+
+func DropElemIf(elem, attr, cond string) func(*html.Node) {
+	return func(n *html.Node) {
+		if isNode(n, html.ElementNode, elem) {
+			for _, v := range n.Attr {
+				if v.Key == attr && strings.Contains(v.Val, cond) {
+					list := []*html.Node{n}
+					list = append(list, walkSiblingsIf(n, attr, cond)...)
+					for _, v := range list {
+						v.Parent.RemoveChild(v)
+					}
+				}
+				break
+			}
+		}
+	}
+}
+
 func ExtractAttr(elem, attr string, arr *[]string) func(*html.Node) {
 	return func(n *html.Node) {
 		if isNode(n, html.ElementNode, elem) {
