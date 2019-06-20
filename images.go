@@ -67,9 +67,7 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 					return
 				}
 
-				if loud {
-					lg.Printf("[% 6s] %.80s", sizeOf(len(jb)), v.LocalPath)
-				}
+				lg.Printf("[% 6s] %.80s", sizeOf(len(jb)), v.LocalPath)
 				i.imgNum++
 			}
 			ch <- i
