@@ -1,35 +1,52 @@
-package wputil
+package feedpub
 
 import (
-	"bytes"
-	"io/ioutil"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
-func TestXMLRead(t *testing.T) {
-	b, err := ioutil.ReadFile("fixtures/test.xml")
-	if err != nil {
-		t.Fatal(err)
+func TestFetch(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"foo":"bar"}`)
+		}))
+
+	b, e := FetchItem(s.URL, "json")
+	if e != nil {
+		t.Error(e)
 	}
-	f, err := ReadWPXML(bytes.NewReader(b))
-	if err != nil {
-		t.Error(err)
-	}
-	if len(f.List()) != 25 {
-		t.Error(len(f.List()))
+
+	var i interface{}
+	e = json.Unmarshal(b, &i)
+	if e != nil {
+		t.Error(e)
 	}
 }
 
-func TestJSONRead(t *testing.T) {
-	b, err := ioutil.ReadFile("fixtures/test.json")
-	if err != nil {
-		t.Fatal(err)
+func Test404(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			http.NotFound(w, r)
+		}))
+
+	_, e := FetchItem(s.URL, "json")
+	if e.Error() != "status: 404" {
+		t.Error(e)
 	}
-	f, err := ReadWPJSON(bytes.NewReader(b))
-	if err != nil {
-		t.Error(err)
-	}
-	if len(f.List()) != 25 {
-		t.Error(len(f.List()))
+}
+
+func TestCT(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprint(w, `{"foo":"bar"}`)
+		}))
+
+	_, e := FetchItem(s.URL, "json")
+	if e.Error() != "content-type: text/plain; charset=utf-8" {
+		t.Error(e)
 	}
 }

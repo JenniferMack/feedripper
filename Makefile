@@ -1,22 +1,20 @@
-name    := wptool
-ver     := $(shell git describe --always --dirty)
-app     := $(shell which $(name))
-gofiles := $(wildcard *.go) $(wildcard cmd/$(name)/*.go) \
-	$(wildcard wphtml/*.go) $(wildcard wpimage/*.go)
+name    := feedpub
+ver     := $(shell git describe --tags --always --dirty)
+gofiles := *.go
 ldflags := -ldflags "-X main.version=$(ver) -w -s"
-binlist := wptool feed-utils recover
 relDir  := releases
+.PHONY: install test
 
-install: $(app)
+install:
+	go install $(ldflags) ./...
 
 test:
 	go test $$(go list ./...)
 
-pkg: $(app) | $(relDir)
-	tar -czf $(relDir)/$(name)-$(ver).tgz -C $(GOBIN) $(binlist)
-
-$(app): $(gofiles)
-	go install $(ldflags) ./...
+pkg: $(gofiles) | $(relDir)
+	cd cmd/$(name); go build -o ../../$(name) $(ldflags) ./...
+	tar -czf $(relDir)/$(name)-$(ver).tgz $(name)
+	rm $(name)
 
 $(name): $(gofiles)
 	cd cmd/$(name); go build $(ldflags) -o $(name) ./...

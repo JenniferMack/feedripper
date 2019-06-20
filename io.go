@@ -1,98 +1,160 @@
-package wputil
+package feedpub
 
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
-	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
-// NewConfigList returns the config info.
-func NewConfigList(in io.Reader) (Configs, error) {
-	c := Configs{}
-	err := json.NewDecoder(in).Decode(&c)
+func ReadConfig(file string) (*Config, error) {
+	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, v := range c {
-		if v.Tags.priOutOfRange() {
-			return nil, fmt.Errorf("[%s] priority out of range", v.Name)
-		}
-	}
-	return c, nil
-}
-
-// ReadWPXML reads WordPress RSS feed XML from a io.Reader and returns a populated Feed.
-// Duplicates are removed and the internal list is sorted newest first.
-func ReadWPXML(in io.Reader) (Feed, error) {
-	r := rss{}
-	f := Feed{}
-
-	err := xml.NewDecoder(in).Decode(&r)
+	c := Config{}
+	err = json.Unmarshal(b, &c)
 	if err != nil {
-		return f, err
+		return nil, err
 	}
 
-	f.Merge(r.Channel.Items)
-	return f, nil
+	if c.Tags.priOutOfRange() {
+		return nil, fmt.Errorf("tag priority out of range")
+	}
+	return &c, nil
 }
 
-func WriteRawXML(b []byte, dir, name string) error {
-	stamp := "_" + strconv.FormatInt(time.Now().Unix(), 10)
-	path := filepath.Join(dir, name+stamp+".xml")
-	return ioutil.WriteFile(path, b, 0644)
+func FetchFeeds(conf Config, lg *log.Logger) error {
+	lg.SetPrefix("[fetching] ")
+	wg := sync.WaitGroup{}
+	errCh := make(chan error)
+	clock := time.Now()
+
+	for _, v := range conf.Feeds {
+		wg.Add(1)
+		go func(v feed) {
+			defer wg.Done()
+			lg.Printf("feed: %s", v.URL)
+			b, err := FetchItem(v.URL, "xml")
+			if err != nil {
+				errCh <- fmt.Errorf("feed %s: %s", v.Name, err)
+				return
+			}
+
+			// xml
+			// name := fmt.Sprintf("%s-%s_%d", v.Name, conf.Names("name"), time.Now().Unix())
+			tm := strconv.FormatInt(time.Now().Unix(), 10)
+			loc := conf.feedPath(v.Name, tm, "xml")
+			err = ioutil.WriteFile(loc, b, 0644)
+			if err != nil {
+				errCh <- fmt.Errorf("write xml: %s", err)
+				return
+			}
+			lg.Printf("save: %s", loc)
+		}(v)
+	}
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
+	errcnt := 0
+	for e := range errCh {
+		errcnt++
+		lg.SetPrefix("[   error] ")
+		lg.Printf("%.85s", e)
+	}
+
+	lg.Printf("[%03d] feeds fetched in %s, %d errors", len(conf.Feeds),
+		time.Since(clock).Round(time.Millisecond), errcnt)
+
+	if errcnt > 0 {
+		return fmt.Errorf("%d errors, check the log", errcnt)
+	}
+	return nil
 }
 
-// ReadWPJSON reads JSON from an io.Reader and returns a populated Feed.
-// Duplicates are removed and the internal list is sorted newest first.
-func ReadWPJSON(in io.Reader) (Feed, error) {
-	f := Feed{}
-	_, err := io.Copy(&f, in)
+func sizeOf(b int) string {
+	const unit = 1000
+	if b < unit {
+		return fmt.Sprintf("%dB", b)
+	}
+
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMG"[exp])
+}
+
+func writeJSON(obj interface{}, path string, pretty bool) (int, error) {
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	if pretty {
+		enc.SetIndent("", "  ")
+		enc.SetEscapeHTML(false)
+	}
+
+	err := enc.Encode(obj)
 	if err != nil {
-		return f, err
+		return 0, err
 	}
-	return f, nil
+
+	err = ioutil.WriteFile(path, buf.Bytes(), 0644)
+	if err != nil {
+		return 0, err
+	}
+	return buf.Len(), nil
 }
 
-// FetchFeed returns an XML feed.
-func FetchFeed(f Feed) ([]byte, error) {
-	if status, ok := statusOK(f.URL); !ok {
-		return nil, fmt.Errorf("[%s] %s", status, f.URL)
+func readItems(p string) (items, int) {
+	b, err := ioutil.ReadFile(p)
+	if err != nil {
+		return items{}, 0
 	}
 
-	resp, err := http.Get(f.URL)
+	it := items{}
+	err = json.Unmarshal(b, &it)
 	if err != nil {
-		return nil, fmt.Errorf("getting feed: %s", err)
+		return items{}, 0
+	}
+	return it, len(it)
+}
+
+func FetchItem(url, typ string) ([]byte, error) {
+	resp, err := http.Head(url)
+	if err != nil {
+		return nil, fmt.Errorf("http head: %s", err)
 	}
 	defer resp.Body.Close()
 
-	b := bytes.Buffer{}
+	if resp.StatusCode >= 400 {
+		resp.Body.Close()
+		return nil, fmt.Errorf("status: %d", resp.StatusCode)
+	}
 
-	_, err = b.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading feed: %s", err)
+	ht := resp.Header.Get("Content-Type")
+	if !strings.Contains(ht, typ) {
+		resp.Body.Close()
+		return nil, fmt.Errorf("content-type: %s", ht)
 	}
-	return b.Bytes(), nil
-}
 
-func statusOK(u string) (string, bool) {
-	resp, err := http.Head(u)
+	resp, err = http.Get(url)
 	if err != nil {
-		return err.Error(), false
+		return nil, fmt.Errorf("http get: %s", err)
 	}
-	if resp.StatusCode != 200 {
-		return resp.Status, false
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("body read: %s", err)
 	}
-	if !strings.Contains(resp.Header.Get("content-type"), "xml") {
-		return resp.Header.Get("content-type"), false
-	}
-	return resp.Status, true
+	return b, nil
 }

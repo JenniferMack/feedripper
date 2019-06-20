@@ -1,12 +1,12 @@
-package wputil
+package feedpub
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 )
 
 type (
-	// Config holds the information for saving WordPress feeds.
 	Config struct {
 		Name       string    `json:"name"`
 		Number     string    `json:"number"`
@@ -23,48 +23,18 @@ type (
 		Language   string    `json:"language"`
 		SiteURL    string    `json:"site_url"`
 		Separator  string    `json:"separator"`
-		Tags       Tags      `json:"tags"`
+		Tags       tags      `json:"tags"`
 		Exclude    []string  `json:"exclude"`
-		Feeds      []Feed    `json:"feeds"`
+		Feeds      []feed    `json:"feeds"`
 	}
 
-	// Tag holds the tag name and priority
-	Tag struct {
-		Name     string `json:"name"`
-		Text     string `json:"text"`
-		Priority uint   `json:"priority"`
-		Limit    uint   `json:"limit"`
+	feed struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
 	}
-
-	//
-	Configs []Config
-
-	//
-	Tags []Tag
 )
 
-// sort interface for Tags
-func (t Tags) Len() int           { return len(t) }
-func (t Tags) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-func (t Tags) Less(i, j int) bool { return t[i].Priority < t[j].Priority }
-
-func (t Tags) priOutOfRange() bool {
-	idx := uint(0)
-	cmp := uint(len(t) - 1)
-
-	for _, v := range t {
-		if v.Priority > idx {
-			idx = v.Priority
-		}
-	}
-	return idx > cmp
-}
-
-func (c Config) FeedName(feed string) string {
-	return fmt.Sprintf("%s-%s", feed, c.Paths("json"))
-}
-
-func (c Config) Paths(path string) string {
+func (c Config) Names(path string) string {
 	name := c.Name
 	if c.Language != "" {
 		name += "-" + c.Language
@@ -76,29 +46,29 @@ func (c Config) Paths(path string) string {
 	switch path {
 	case "name":
 		return name
-	case "json":
+	case "json", "xml", "html", "img.json":
 		return fmt.Sprintf("%s.%s", name, path)
-	case "xml":
-		return fmt.Sprintf("%s.%s", name, path)
-	case "html":
-		return fmt.Sprintf("%s.%s", name, path)
-	case "image-json":
-		return fmt.Sprintf("%s-%s.%s", name, "image", "json")
-	case "image-html":
-		return fmt.Sprintf("%s-%s.%s", name, "image", "html")
-	case "image-dir":
-		return c.ImageDir
 	case "image-404":
 		return c.Image404
-	case "rss-dir":
+	case "dir-images":
+		return c.ImageDir
+	case "dir-rss", "dir-xml":
 		return c.RSSDir
-	case "json-dir":
+	case "dir-json":
 		return c.JSONDir
 	}
 	return ""
 }
 
-func (c Config) Range(prefix string) string {
+func (c Config) feedPath(name, suf, typ string) string {
+	if suf != "" {
+		suf = `_` + suf
+	}
+	n := fmt.Sprintf("%s-%s%s.%s", name, c.Names("name"), suf, typ)
+	return filepath.Join(c.Names("dir-"+typ), n)
+}
+
+func (c Config) DateRange() string {
 	str := c.Deadline
 	end := c.Deadline.AddDate(0, 0, c.Days)
 	if c.Days < 0 {
@@ -113,5 +83,18 @@ func (c Config) Range(prefix string) string {
 	if str.Year() < end.Year() {
 		strFmt = "02 Jan 2006"
 	}
-	return fmt.Sprintf("%s %s, %s–%s", prefix, c.Number, str.Format(strFmt), end.Format("02 Jan 2006"))
+	return fmt.Sprintf("%s–%s", str.Format(strFmt), end.Format("02 Jan 2006"))
+}
+
+func (c Config) inRange(itm item) bool {
+	str := c.Deadline
+	end := c.Deadline.AddDate(0, 0, c.Days)
+	if c.Days < 0 {
+		str, end = end, str
+	}
+
+	if itm.PubDate.After(str) && itm.PubDate.Before(end) {
+		return true
+	}
+	return false
 }
