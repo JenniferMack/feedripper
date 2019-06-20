@@ -18,11 +18,8 @@ import (
 
 var (
 	lg          *log.Logger
+	version     string
 	flagVersion = flag.Bool("v", false, "print version")
-
-	// unicodeCmd  = flag.NewFlagSet("subcommand unicode", flag.ExitOnError)
-	// flagUnifont = unicodeCmd.String("tex", "unifont", "LaTex `command` for Unicode font")
-	// flagUniFile = unicodeCmd.String("f", "", "LaTeX `file` to use")
 
 	feedCmd        = flag.NewFlagSet("subcommand feed", flag.ExitOnError)
 	flagFeedConfig = feedCmd.String("c", "config.json", "config `file` to use")
@@ -52,7 +49,7 @@ func init() {
 	flag.Parse()
 
 	if *flagVersion {
-		fmt.Printf("%s version: %s", os.Args[0], "[vers]")
+		fmt.Printf("%s version: %s\n", os.Args[0], version)
 		os.Exit(0)
 	}
 }
