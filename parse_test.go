@@ -131,3 +131,14 @@ func TestConvert(t *testing.T) {
 		t.Errorf("%s", r)
 	}
 }
+
+func TestVLink(t *testing.T) {
+	h := `<p><iframe id="molvideoplayer" title="MailOnline Embed Player" src="https://www.dailymail.co.uk/embed/video/1703272.html" width="618" height="480" frameborder="0" scrolling="no" allowfullscreen="allowfullscreen"><span data-mce-type="bookmark" style="display: inline-block; width: 0px; overflow: hidden; line-height: 0;" class="mce_SELRES_start"></span></iframe></p>`
+	r, _ := Parse(strings.NewReader(h),
+		ConvertToLink("iframe", "Video Link"),
+	)
+
+	if r != `<p><a href="https://www.dailymail.co.uk/embed/video/1703272.html">Video Link</a></p>` {
+		t.Error(r)
+	}
+}

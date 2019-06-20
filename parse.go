@@ -175,11 +175,17 @@ func ConvertToLink(from, link string) func(*html.Node) {
 	return func(n *html.Node) {
 		if isNode(n, html.ElementNode, from) {
 			n.Data = "a"
-			for k, v := range n.Attr {
+			for _, v := range n.Attr {
 				if v.Key == "src" {
-					n.Attr[k].Key = "href"
+					s := v.Val
+					n.Attr = []html.Attribute{
+						{Key: "href", Val: s},
+					}
 					break
 				}
+			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				n.RemoveChild(c)
 			}
 			nu := newNode(html.TextNode, link)
 			n.AppendChild(nu)
