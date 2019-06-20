@@ -27,6 +27,7 @@ func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 
 	wg := sync.WaitGroup{}
 	itms, _ := readItems(conf.Names("json"))
+	lg.Printf("downloading <= %s", conf.Names("json"))
 
 	for _, v := range itms {
 		wg.Add(1)
