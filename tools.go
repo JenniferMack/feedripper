@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+
+	"golang.org/x/net/html"
 )
 
 func Titles(conf Config, out io.Writer) error {
@@ -29,6 +31,26 @@ func Titles(conf Config, out io.Writer) error {
 		fmt.Fprintf(out, "%02d. [%s] %.59s\n", k+1, v.PubDate.Format("0102|15:04:05"), v.Title)
 	}
 	return nil
+}
+
+func Tags(conf Config, out io.Writer) error {
+	f, err := os.Open(conf.Names("html"))
+	if err != nil {
+		return err
+	}
+	cnt := 0
+	_, err = Parse(f,
+		func(n *html.Node) {
+			if n.Type == html.ElementNode && n.Data == "h1" {
+				fmt.Fprintf(out, "--- %s ---\n", n.FirstChild.Data)
+				cnt = 1
+			}
+			if n.Type == html.ElementNode && n.Data == "h2" {
+				fmt.Fprintf(out, "%02d. %.75s\n", cnt, n.FirstChild.Data)
+				cnt++
+			}
+		})
+	return err
 }
 
 func BuildFeeds(conf Config, pp bool, lg *log.Logger) error {

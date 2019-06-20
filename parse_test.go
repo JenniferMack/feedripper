@@ -54,25 +54,25 @@ func TestReplaceAttr(t *testing.T) {
 }
 
 func TestReplace(t *testing.T) {
-	h := `one two <p class="style">three</p> four`
+	h := `one two <p class="head">three</p><p class="style">three</p> four`
 	r, e := Parse(strings.NewReader(h), ReplaceElem("p", "span"))
 	if e != nil {
 		t.Fatal(e)
 	}
 
-	if !strings.Contains(r, `<span class="style">three</span>`) {
+	if r != `one two <span class="head">three</span><span class="style">three</span> four` {
 		t.Errorf("%s", r)
 	}
 }
 
 func TestWrap(t *testing.T) {
-	h := `This is <strong>bold</strong> and this is <em>italic</em>, both need spans.`
+	h := `This is <strong>unbold</strong><strong>bold</strong> and this is <em>italic</em>, both need spans.`
 	r, e := Parse(strings.NewReader(h), WrapElem("em", "span"), WrapElem("strong", "span"))
 	if e != nil {
 		t.Fatal(e)
 	}
 
-	if !strings.Contains(r, `This is <span><strong>bold</strong></span> and this is <span><em>italic</em></span>, both need spans.`) {
+	if !strings.Contains(r, `This is <span><strong>unbold</strong></span><span><strong>bold</strong></span> and this is <span><em>italic</em></span>, both need spans.`) {
 		t.Errorf("%s", r)
 	}
 }
@@ -90,13 +90,13 @@ func TestWrapImg(t *testing.T) {
 }
 
 func TestUnwrap(t *testing.T) {
-	h := `<p><a href="/img/foo.jpg"><img src="/img/foo.jpg"/></a></p>`
+	h := `<p><a href="/img/foo.jpg"><img src="/img/foo.jpg"/></a><a href="/img/bar.jpg"><img src="/img/bar.jpg"/></a></p>`
 	r, e := Parse(strings.NewReader(h), UnwrapElem("img", "a"))
 	if e != nil {
 		t.Fatal(e)
 	}
 
-	if !strings.Contains(r, `<p><img src="/img/foo.jpg"/></p>`) {
+	if r != `<p><img src="/img/foo.jpg"/><img src="/img/bar.jpg"/></p>` {
 		t.Errorf("%s", r)
 	}
 }
@@ -112,7 +112,7 @@ func TestFull(t *testing.T) {
 		t.Fatal(e)
 	}
 
-	if !strings.Contains(r, `<figcaption>Video Link</figcaption></figure>`) {
+	if !strings.Contains(r, `<figcaption><a href="https://www.youtube.com/embed/BbuhJCIP1xI?feature=oembed">Video Link</a></figcaption></figure>`) {
 		t.Errorf("%s", r)
 	}
 }

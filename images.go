@@ -97,8 +97,34 @@ func ExtractImages(conf Config, pp bool, lg *log.Logger, fn ...func(*html.Node))
 
 	for k, v := range itms {
 		u := []string{}
-		fn = append(fn, ExtractAttr("img", "src", &u))
-		str, err := Parse(strings.NewReader(v.Body), fn...)
+		str, err := Parse(strings.NewReader(v.Body),
+			// fix relative links while here
+			func(n *html.Node) {
+				if n.Type == html.ElementNode && n.Data == "a" {
+					for k, v := range n.Attr {
+						if v.Key == "href" {
+							u, err := url.Parse(v.Val)
+							if err != nil {
+								return
+							}
+
+							if u.Host == "" {
+								u.Host = conf.SiteURL
+							}
+							if u.Scheme == "" {
+								u.Scheme = "http"
+							}
+							if conf.UseTLS {
+								u.Scheme = "https"
+							}
+							n.Attr[k].Val = u.String()
+						}
+					}
+				}
+			},
+			ConvertElemIf("iframe", "img", "src", "youtube.com"),
+			ExtractAttr("img", "src", &u),
+		)
 		if err != nil {
 			return fmt.Errorf("html parse: %s", err)
 		}

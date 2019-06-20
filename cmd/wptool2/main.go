@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"feedpub"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -17,9 +20,9 @@ var (
 	lg          *log.Logger
 	flagVersion = flag.Bool("v", false, "print version")
 
-	unicodeCmd  = flag.NewFlagSet("subcommand unicode", flag.ExitOnError)
-	flagUnifont = unicodeCmd.String("tex", "unifont", "LaTex `command` for Unicode font")
-	flagUniFile = unicodeCmd.String("f", "", "LaTeX `file` to use")
+	// unicodeCmd  = flag.NewFlagSet("subcommand unicode", flag.ExitOnError)
+	// flagUnifont = unicodeCmd.String("tex", "unifont", "LaTex `command` for Unicode font")
+	// flagUniFile = unicodeCmd.String("f", "", "LaTeX `file` to use")
 
 	feedCmd        = flag.NewFlagSet("subcommand feed", flag.ExitOnError)
 	flagFeedConfig = feedCmd.String("c", "config.json", "config `file` to use")
@@ -28,6 +31,7 @@ var (
 	flagFeedJSON   = feedCmd.Bool("json", false, "save current feed items to JSON")
 	flagFeedPretty = feedCmd.Bool("pp", false, "pretty print output")
 	flagFeedTitles = feedCmd.Bool("titles", false, "print article titles")
+	flagFeedTags   = feedCmd.Bool("tags", false, "print feed tags")
 
 	imageCmd        = flag.NewFlagSet("subcommand image", flag.ExitOnError)
 	flagImageConfig = imageCmd.String("c", "config.json", "config `file` to use")
@@ -36,6 +40,12 @@ var (
 	flagImageExt    = imageCmd.Bool("extract", false, "extract images from feed")
 	flagImageFetch  = imageCmd.Bool("fetch", false, "download images")
 	flagImageHTML   = imageCmd.Bool("render", false, "render HTML with local image links")
+
+	utilCmd       = flag.NewFlagSet("subcommand util", flag.ExitOnError)
+	flagUtilName  = utilCmd.Bool("name", false, "print name")
+	flagUtilSeq   = utilCmd.Bool("seq", false, "print sequence number")
+	flagUtilRange = utilCmd.Bool("range", false, "print date range")
+	flagUtilUni   = utilCmd.Bool("unicode", false, "mark unicode glyphs in LaTeX")
 )
 
 func init() {
@@ -66,9 +76,13 @@ func main() {
 		imageCmd.Parse(os.Args[2:])
 		errs(doImageCmd())
 
-	case "unicode":
-		unicodeCmd.Parse(os.Args[2:])
-		errs(doUnicodeCmd())
+	case "util":
+		utilCmd.Parse(os.Args[2:])
+		errs(doUtilCmd())
+
+	// case "unicode":
+	// 	unicodeCmd.Parse(os.Args[2:])
+	// 	errs(doUnicodeCmd())
 
 	default:
 		subCmdHelp()
@@ -128,6 +142,12 @@ func doImageCmd() error {
 			return err
 		}
 	}
+
+	if *flagImageHTML {
+		if err := feedpub.ExportHTML(*conf, lg); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -139,6 +159,13 @@ func doFeedCmd() error {
 
 	if *flagFeedTitles {
 		if err := feedpub.Titles(*conf, os.Stdout); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if *flagFeedTags {
+		if err := feedpub.Tags(*conf, os.Stdout); err != nil {
 			return err
 		}
 		return nil
@@ -162,4 +189,68 @@ func doFeedCmd() error {
 		}
 	}
 	return nil
+}
+
+func doUtilCmd() error {
+	conf, err := feedpub.ReadConfig(*flagFeedConfig)
+	if err != nil {
+		return err
+	}
+
+	if *flagUtilUni {
+		unicodeRegex(os.Stdin, os.Stdout)
+		return nil
+	}
+
+	if *flagUtilName {
+		fmt.Print(conf.Names("name"))
+		return nil
+	}
+
+	if *flagUtilSeq {
+		fmt.Printf("%s %s", conf.SeqName, conf.Number)
+		return nil
+	}
+
+	if *flagUtilRange {
+		srt := conf.Deadline
+		end := srt.AddDate(0, 0, conf.Days)
+		if conf.Days < 0 {
+			srt, end = end, srt
+		}
+
+		fm := "02"
+		if srt.Month() < end.Month() {
+			fm += " Jan"
+		}
+		if srt.Year() < end.Year() {
+			fm = "02 Jan 2006"
+		}
+
+		fmt.Printf("%s–%s", srt.Format(fm), end.Format("02 Jan 2006"))
+	}
+	return nil
+}
+
+func unicodeRegex(in io.Reader, out io.Writer) {
+
+	var b bytes.Buffer
+	b.ReadFrom(in)
+
+	re := regexp.MustCompile(`(\p{Cf}+|\p{Co}+)`)
+	x := re.ReplaceAllString(b.String(), "")
+
+	re = regexp.MustCompile(`(\p{Devanagari}+)`)
+	x = re.ReplaceAllString(x, "{\\sanskrit $1}")
+
+	re = regexp.MustCompile(`(\p{Runic}+)`)
+	x = re.ReplaceAllString(x, "{\\runic $1}")
+
+	re = regexp.MustCompile(`(\p{So}+|\p{No}+)`)
+	x = re.ReplaceAllString(x, "{\\unisymbol $1}")
+
+	re = regexp.MustCompile(`(\p{Greek}+|\p{Arabic}+|\p{Hebrew}+|\p{Armenian}+|\p{Georgian}+)`)
+	x = re.ReplaceAllString(x, "{\\eastern $1}")
+
+	fmt.Fprint(out, x)
 }

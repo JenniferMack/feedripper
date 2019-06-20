@@ -6,9 +6,9 @@ import (
 )
 
 func TestFeedPath(t *testing.T) {
-	c := Config{JSONDir: "json"}
-	p := c.feedPath("foo", "json")
-	if p != "json/foo.json" {
+	c := Config{JSONDir: "json", Name: "test"}
+	p := c.feedPath("foo", "", "json")
+	if p != "json/foo-test.json" {
 		t.Error(p)
 	}
 }

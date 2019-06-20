@@ -126,7 +126,7 @@ func readItems(p string) (items, int) {
 	if err != nil {
 		return items{}, 0
 	}
-	return it, len(b)
+	return it, len(it)
 }
 
 func FetchItem(url, typ string) ([]byte, error) {
