@@ -19,7 +19,7 @@ const html_tmpl = `
 {{- range $cont := . -}}
 <h1>{{$cont.Header}}</h1>
 {{range $post := $cont.PostList}}
-<h2>{{$post.Title}}</h2>
+<h2><a href="{{$post.Link}}">{{$post.Title}}</a></h2>
 <h3>{{$post.Description}}</h3>
 <!-- pubDate: {{$post.PubDate}} -->
 
