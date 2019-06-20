@@ -1,4 +1,4 @@
-module feedpub
+module wputil
 
 go 1.12
 

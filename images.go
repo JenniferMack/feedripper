@@ -1,4 +1,4 @@
-package feedpub
+package wputil
 
 import (
 	"fmt"

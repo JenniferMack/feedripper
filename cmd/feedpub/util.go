@@ -1,10 +1,10 @@
 package main
 
 import (
-	"feedpub"
 	"flag"
 	"fmt"
 	"os"
+	"wputil"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 )
 
 func doUtilCmd() error {
-	conf, err := feedpub.ReadConfig(*flagFeedConfig)
+	conf, err := wputil.ReadConfig(*flagFeedConfig)
 	if err != nil {
 		return err
 	}
