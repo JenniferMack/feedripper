@@ -42,6 +42,7 @@ func ExportHTML(conf Config, lg *log.Logger) error {
 	itms, n := readItems(conf.Names("json"))
 	lg.Printf("Processing %d posts", n)
 
+	sort.Sort(sort.Reverse(itms))
 	p := makeTaggedList(itms, conf)
 	buf := bytes.Buffer{}
 	err := tmpl.Execute(&buf, p)
@@ -58,11 +59,10 @@ func ExportHTML(conf Config, lg *log.Logger) error {
 }
 
 func makeTaggedList(i items, conf Config) []postData {
-	tagged := sortPosts(i, conf.Tags)
+	tagged := filterPosts(i, conf.Tags)
 
 	posts := []postData{}
 	for _, v := range conf.Tags {
-		sort.Sort(sort.Reverse(tagged[v.Name]))
 		p := postData{
 			Header:   v.Name,
 			Sep:      conf.Separator,
@@ -73,7 +73,7 @@ func makeTaggedList(i items, conf Config) []postData {
 	return posts
 }
 
-func sortPosts(i items, t tags) map[string]items {
+func filterPosts(i items, t tags) map[string]items {
 	// sort by priority
 	byPri := make(tags, len(t))
 	copy(byPri, t)
