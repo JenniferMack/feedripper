@@ -53,7 +53,7 @@ Date range: {{.Days | printf "%+d"}} days
 Deadline range:    {{timeFmt .Deadline .Days}} to {{timeFmt .Deadline 0}}
 {{- else -}}
 Deadline range:    {{timeFmt .Deadline 0}} to {{timeFmt .Deadline .Days}}
-{{end -}}
+{{end}}
 Header Sequence:   {{.SeqName}} {{.Number}}
 Header Date Range: {{.DateRange}}
 XML is saved to:   {{.RSSDir}}

@@ -74,6 +74,9 @@ func (c Config) DateRange() string {
 	if c.Days < 0 {
 		str, end = end, str
 	}
+	if end.Hour() == 0 && end.Minute() == 0 && end.Second() == 0 {
+		end = end.Add(-1 * time.Second)
+	}
 
 	strFmt := "02"
 	if str.Month() < end.Month() {

@@ -13,6 +13,36 @@ func TestFeedPath(t *testing.T) {
 	}
 }
 
+func TestRangeDay(t *testing.T) {
+	tm, _ := time.Parse(time.RFC3339, "2019-06-23T18:00:00-05:00")
+	c := Config{Days: -7, Deadline: tm}
+	g := c.DateRange()
+	w := "16–23 Jun 2019"
+	if g != w {
+		t.Error(g)
+	}
+}
+
+func TestRangeMidniteMinus(t *testing.T) {
+	tm, _ := time.Parse(time.RFC3339, "2019-06-24T00:00:00-05:00")
+	c := Config{Days: -7, Deadline: tm}
+	g := c.DateRange()
+	w := "17–23 Jun 2019"
+	if g != w {
+		t.Error(g)
+	}
+}
+
+func TestRangeMidnite(t *testing.T) {
+	tm, _ := time.Parse(time.RFC3339, "2019-06-24T00:00:00-05:00")
+	c := Config{Days: 7, Deadline: tm}
+	g := c.DateRange()
+	w := "24–30 Jun 2019"
+	if g != w {
+		t.Error(g)
+	}
+}
+
 func TestConfig(t *testing.T) {
 	c, e := ReadConfig("fixtures/config.json")
 	if e != nil {
