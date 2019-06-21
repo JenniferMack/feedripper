@@ -2,10 +2,10 @@
 
 This is a library for managing WordPress RSS feeds and database exports.
 
-It also provides a command line interface with `wptool`.
+It also provides a command line interface with `feedpub`.
 
-## wptool
+## feedpub
 
-Basic help is available with `wptool -h`
+Basic help is available with `feedpub -h`
 
-Subcommand help is available with `wptool help`
+Subcommand help is available with `feedpub help`
