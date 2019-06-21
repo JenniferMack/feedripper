@@ -46,7 +46,7 @@ func Tags(conf Config, out io.Writer) error {
 				cnt = 1
 			}
 			if n.Type == html.ElementNode && n.Data == "h2" {
-				fmt.Fprintf(out, "%02d. %.75s\n", cnt, n.FirstChild.Data)
+				fmt.Fprintf(out, "%02d. %.75s\n", cnt, n.FirstChild.FirstChild.Data)
 				cnt++
 			}
 		})
