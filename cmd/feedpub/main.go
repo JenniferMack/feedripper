@@ -11,6 +11,7 @@ var (
 	lg          *log.Logger
 	version     string
 	flagVersion = flag.Bool("v", false, "print version")
+	flagCheck   = flag.Bool("check", false, "config status report")
 )
 
 func init() {
@@ -18,6 +19,16 @@ func init() {
 
 	if *flagVersion {
 		fmt.Printf("%s version: %s\n", os.Args[0], version)
+		os.Exit(0)
+	}
+
+	if *flagCheck {
+		f := "config.json"
+		if flag.Arg(0) != "" {
+			f = flag.Arg(0)
+		}
+		r := checkConfig(f)
+		fmt.Println(r)
 		os.Exit(0)
 	}
 }

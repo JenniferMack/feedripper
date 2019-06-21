@@ -37,21 +37,7 @@ func doUtilCmd() error {
 	}
 
 	if *flagUtilRange {
-		srt := conf.Deadline
-		end := srt.AddDate(0, 0, conf.Days)
-		if conf.Days < 0 {
-			srt, end = end, srt
-		}
-
-		fm := "02"
-		if srt.Month() < end.Month() {
-			fm += " Jan"
-		}
-		if srt.Year() < end.Year() {
-			fm = "02 Jan 2006"
-		}
-
-		fmt.Printf("%s–%s", srt.Format(fm), end.Format("02 Jan 2006"))
+		fmt.Print(conf.DateRange())
 	}
 	return nil
 }
