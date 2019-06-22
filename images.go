@@ -185,7 +185,9 @@ func parseRawPath(conf Config, u string) (string, error) {
 }
 
 func makeLocPath(d, p string) string {
-	pth := path.Base(p)
+	u := path.Base(p)
+	pth, _ := url.PathUnescape(u)
+
 	if strings.Contains(p, "img.youtube.com") {
 		pth = path.Base(path.Dir(p)) + "-" + pth
 	}

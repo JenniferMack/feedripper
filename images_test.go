@@ -1,12 +1,15 @@
 package wputil
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestLP(t *testing.T) {
-	p := `https://foo.bar.org/path/file.png`
-	p = makeLocPath("images", p)
-	if p != "images/file.jpg" {
-		t.Error(p)
+	p := `https://foo.bar.org/path/file-d%E2%80%99%C3%A9an.png`
+	g := makeLocPath("images", p)
+	w := "images/file-d’éan.jpg"
+	if g != w {
+		t.Error(g)
 	}
 }
 
