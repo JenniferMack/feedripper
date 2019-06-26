@@ -63,6 +63,9 @@ func makeTaggedList(i items, conf Config) []postData {
 
 	posts := []postData{}
 	for _, v := range conf.Tags {
+		if len(tagged[v.Name]) == 0 {
+			continue
+		}
 		p := postData{
 			Header:   v.Name,
 			Sep:      conf.Separator,
@@ -97,9 +100,6 @@ func filterPosts(i items, t tags) map[string]items {
 
 	list := make(map[string]items, len(t))
 	for k, v := range byPri {
-		if len(pl[k]) == 0 {
-			continue
-		}
 		list[v.Name] = pl[k]
 	}
 	return list
