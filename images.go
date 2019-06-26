@@ -14,79 +14,85 @@ import (
 	"golang.org/x/net/html"
 )
 
+type comm struct {
+	post item
+	errs []error
+}
+
 func FetchImages(conf Config, loud bool, lg *log.Logger) error {
 	lg.SetPrefix("[images  ] ")
-	type comm struct {
-		imgs   []feedimage
-		err    error
-		imgNum int
-		imgTot int
-	}
 	ch := make(chan comm)
 	token := make(chan struct{}, 5)
 
 	wg := sync.WaitGroup{}
-	itms, _ := readItems(conf.Names("json"))
+	posts, _ := readItems(conf.Names("json"))
 	lg.Printf("downloading <= %s", conf.Names("json"))
 
-	for _, v := range itms {
+	for _, v := range posts {
 		wg.Add(1)
-
-		go func(i comm) {
+		go func(p item) {
 			defer wg.Done()
 			defer func() { <-token }()
 			token <- struct{}{}
-
-			for _, v := range i.imgs {
-				i.imgTot++
-				if isOnDisk(v.LocalPath) == true {
-					if loud {
-						lg.Printf("[%6s] %.80s", "skip", v.LocalPath)
-					}
-					continue
-				}
-
-				ib, err := FetchItem(v.URL, "image")
-				if err != nil {
-					i.err = err
-					ch <- i
-					return
-				}
-
-				jb, err := MakeJPEG(ib, conf.ImageQual, conf.ImageWidth)
-				if err != nil {
-					i.err = err
-					ch <- i
-					return
-				}
-
-				err = ioutil.WriteFile(v.LocalPath, jb, 0644)
-				if err != nil {
-					i.err = err
-					ch <- i
-					return
-				}
-
-				lg.Printf("[% 6s] %.80s", sizeOf(len(jb)), v.LocalPath)
-				i.imgNum++
-			}
-			ch <- i
-		}(comm{imgs: v.Images})
+			fetchPostImgs(p, ch, lg, conf, loud)
+		}(v)
 	}
 	go func() { wg.Wait(); close(ch) }()
 
 	imgCnt, imgTot, errCnt := 0, 0, 0
+	postList := items{}
 	for v := range ch {
-		imgCnt += v.imgNum
-		imgTot += v.imgTot
-
-		if v.err != nil {
-			lg.Printf("[error] %s", v.err)
+		postList.add(v.post)
+		imgTot += len(v.post.Images)
+		imgCnt += len(v.post.Images) - len(v.errs)
+		for _, err := range v.errs {
+			if loud {
+				lg.Printf("[error] %s", err)
+			}
 			errCnt++
 		}
 	}
 	lg.Printf("[%03d/%03d] images downloaded, %d errors", imgCnt, imgTot, errCnt)
+	if _, err := writeJSON(postList, conf.Names("json"), true); err != nil {
+		return fmt.Errorf("update: %s", err)
+	}
 	return nil
+}
+
+func fetchPostImgs(i item, ch chan comm, lg *log.Logger, conf Config, loud bool) {
+	c := comm{
+		post: i,
+	}
+	defer func() { ch <- c }()
+
+	for k, v := range i.Images {
+		if isOnDisk(v.LocalPath) {
+			if loud {
+				lg.Printf("[%6s] %.79s", "skip", v.LocalPath)
+			}
+			continue
+		}
+
+		imgbyts, err := FetchItem(v.URL, "image")
+		if err != nil {
+			c.errs = append(c.errs, fmt.Errorf("%s: %.80s", err, v.URL))
+			i.Images[k].LocalPath = conf.Names("image-404")
+			continue
+		}
+
+		jpgbyts, err := MakeJPEG(imgbyts, conf.ImageQual, conf.ImageWidth)
+		if err != nil {
+			c.errs = append(c.errs, err)
+			continue
+		}
+
+		err = ioutil.WriteFile(v.LocalPath, jpgbyts, 0644)
+		if err != nil {
+			c.errs = append(c.errs, err)
+			continue
+		}
+		lg.Printf("[% 6s] %.80s", sizeOf(len(jpgbyts)), v.LocalPath)
+	}
 }
 
 func ExtractImages(conf Config, pp bool, lg *log.Logger, fn ...func(*html.Node)) error {
