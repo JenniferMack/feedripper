@@ -5,7 +5,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"wputil"
+	"feedripper"
 
 	"golang.org/x/net/html"
 )
@@ -21,13 +21,13 @@ var (
 )
 
 func doImageCmd() error {
-	conf, err := wputil.ReadConfig(*flagImageConfig)
+	conf, err := feedripper.ReadConfig(*flagImageConfig)
 	if err != nil {
 		return err
 	}
 
 	if *flagImageExt {
-		if err := wputil.ExtractImages(*conf, *flagImagePretty, lg,
+		if err := feedripper.ExtractImages(*conf, *flagImagePretty, lg,
 			func(n *html.Node) {
 				if n.Type == html.ElementNode && n.Data == "img" {
 					for _, v := range n.Attr {
@@ -45,20 +45,20 @@ func doImageCmd() error {
 					}
 				}
 			},
-			wputil.ConvertElemIf("iframe", "img", "src", "youtube.com"),
+			feedripper.ConvertElemIf("iframe", "img", "src", "youtube.com"),
 		); err != nil {
 			return err
 		}
 	}
 
 	if *flagImageFetch {
-		if err := wputil.FetchImages(*conf, *flagImageLoud, lg); err != nil {
+		if err := feedripper.FetchImages(*conf, *flagImageLoud, lg); err != nil {
 			return err
 		}
 	}
 
 	if *flagImageHTML {
-		if err := wputil.ExportHTML(*conf, lg); err != nil {
+		if err := feedripper.ExportHTML(*conf, lg); err != nil {
 			return err
 		}
 	}

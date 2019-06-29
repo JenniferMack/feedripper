@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"os"
-	"wputil"
+	"feedripper"
 )
 
 var (
@@ -18,39 +18,39 @@ var (
 )
 
 func doFeedCmd() error {
-	conf, err := wputil.ReadConfig(*flagFeedConfig)
+	conf, err := feedripper.ReadConfig(*flagFeedConfig)
 	if err != nil {
 		return err
 	}
 
 	if *flagFeedTitles {
-		if err := wputil.Titles(*conf, os.Stdout); err != nil {
+		if err := feedripper.Titles(*conf, os.Stdout); err != nil {
 			return err
 		}
 		return nil
 	}
 
 	if *flagFeedTags {
-		if err := wputil.Tags(*conf, os.Stdout); err != nil {
+		if err := feedripper.Tags(*conf, os.Stdout); err != nil {
 			return err
 		}
 		return nil
 	}
 
 	if *flagFeedFetch {
-		if err := wputil.FetchFeeds(*conf, lg); err != nil {
+		if err := feedripper.FetchFeeds(*conf, lg); err != nil {
 			return err
 		}
 	}
 
 	if *flagFeedMerge {
-		if err := wputil.BuildFeeds(*conf, *flagFeedPretty, lg); err != nil {
+		if err := feedripper.BuildFeeds(*conf, *flagFeedPretty, lg); err != nil {
 			return err
 		}
 	}
 
 	if *flagFeedJSON {
-		if err := wputil.WriteItemList(*conf, *flagFeedPretty, lg); err != nil {
+		if err := feedripper.WriteItemList(*conf, *flagFeedPretty, lg); err != nil {
 			return err
 		}
 	}

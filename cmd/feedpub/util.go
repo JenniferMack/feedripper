@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"wputil"
+	"feedripper"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 )
 
 func doUtilCmd() error {
-	conf, err := wputil.ReadConfig(*flagFeedConfig)
+	conf, err := feedripper.ReadConfig(*flagFeedConfig)
 	if err != nil {
 		return err
 	}

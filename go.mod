@@ -1,4 +1,4 @@
-module wputil
+module feedripper
 
 go 1.12
 

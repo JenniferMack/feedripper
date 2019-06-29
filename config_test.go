@@ -1,4 +1,4 @@
-package wputil
+package feedripper
 
 import (
 	"testing"

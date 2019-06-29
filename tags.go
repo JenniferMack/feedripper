@@ -1,4 +1,4 @@
-package wputil
+package feedripper
 
 type (
 	tag struct {

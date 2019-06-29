@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
-	"wputil"
+	"feedripper"
 )
 
 func timeFmt(t time.Time, add int) string {
@@ -17,7 +17,7 @@ func checkConfig(c string) string {
 	report := strings.Builder{}
 	fmt.Fprintln(&report, "Config report...")
 
-	conf, err := wputil.ReadConfig(c)
+	conf, err := feedripper.ReadConfig(c)
 	if err != nil {
 		fmt.Fprintln(&report, "invalid JSON")
 		fmt.Fprintln(&report, err)

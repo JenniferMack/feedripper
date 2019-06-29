@@ -1,4 +1,4 @@
-# wputils
+# Feedripper
 
 This is a library for managing WordPress RSS feeds and database exports.
 
